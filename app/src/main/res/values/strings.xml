@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Secret Garden</string>
+    <string name="download_video_channel">Download video channel</string>
+    <string name="downloading_video">Downloading  %1$d videos</string>
+    <string name="select_folder">Select folder</string>
+    <string name="create_a_directory">Create a directory</string>
+    <string name="share">Share</string>
+    <string name="search">Search</string>
+    <string name="video">Video</string>
+    <string name="set_up">Set up</string>
+    <string name="help">Help</string>
+    <string name="send_video">Send video</string>
+    <string name="shop">Shop</string>
+    <string name="porn91">91</string>
+    <string name="ck52">57</string>
+    <string name="sort">Sort</string>
+    <string name="video_type">Video Type</string>
+    <declare-styleable name="ZoomableTextureView">
+        <attr name="minScale" format="float" />
+        <attr name="maxScale" format="float" />
+    </declare-styleable>
+</resources>

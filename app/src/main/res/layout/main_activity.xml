@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<psycho.euphoria.v.BottomSheetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <GridView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:horizontalSpacing="12dp"
+        android:padding="12dp"
+        android:verticalSpacing="24dp" />
+</psycho.euphoria.v.BottomSheetLayout>

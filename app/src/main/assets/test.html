@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        const string = `public int Id;
+        public String Title;
+        public String Url;
+        public String Thumbnail;
+        public String Source;
+        public int Width;
+        public int Height;
+        public int Duration;
+        public int Hidden;
+        public int VideoType;
+        public long CreateAt;
+        public long UpdateAt;
+        public int Views;`;
+        const matches = [...string.matchAll(/(String|int|long) ([a-zA-Z]+)/g)];
+        console.log(matches.map(x => `object.put("${x[2]}", video.${x[2]});`).join('\n'));
+    </script>
+</body>
+
+</html>
