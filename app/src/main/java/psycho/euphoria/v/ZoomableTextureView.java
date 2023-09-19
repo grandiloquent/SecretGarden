@@ -123,6 +123,7 @@ public class ZoomableTextureView extends TextureView {
             PointF curr = new PointF(motionEvent.getX(), motionEvent.getY());
 
             switch (motionEvent.getActionMasked()) {
+
                 case MotionEvent.ACTION_DOWN:
                     last.set(motionEvent.getX(), motionEvent.getY());
                     start.set(last);
@@ -190,18 +191,16 @@ public class ZoomableTextureView extends TextureView {
                         matrix.getValues(m);
                         float x = m[Matrix.MTRANS_X];
                         float y = m[Matrix.MTRANS_Y];
-                        if (mScaleFactor < 1) {
-                            if (0 < getWidth()) {
-                                if (y < -bottom)
-                                    matrix.postTranslate(0, -(y + bottom));
-                                else if (y > 0)
-                                    matrix.postTranslate(0, -y);
-                            } else {
-                                if (x < -right)
-                                    matrix.postTranslate(-(x + right), 0);
-                                else if (x > 0)
-                                    matrix.postTranslate(-x, 0);
-                            }
+                        if (0 < getWidth()) {
+                            if (y < -bottom)
+                                matrix.postTranslate(0, -(y + bottom));
+                            else if (y > 0)
+                                matrix.postTranslate(0, -y);
+                        } else {
+                            if (x < -right)
+                                matrix.postTranslate(-(x + right), 0);
+                            else if (x > 0)
+                                matrix.postTranslate(-x, 0);
                         }
                     }
                 } else {

@@ -7,12 +7,11 @@
     android:background="#000"
     android:keepScreenOn="true">
 
-    <psycho.euphoria.v.ZoomableTextureView
+    <TextureView
         android:id="@+id/texture_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        app:maxScale="6"/>
+        android:layout_gravity="center"/>
 
     <FrameLayout
         android:id="@+id/exo_bottom_bar"
@@ -142,31 +141,6 @@
             android:scaleType="fitXY"
             android:src="@drawable/exo_styled_controls_previous" />
 
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="0dp"
-            android:layout_marginLeft="@dimen/exo_icon_horizontal_margin"
-            android:layout_marginRight="@dimen/exo_icon_horizontal_margin"
-            android:scaleType="fitXY">
-            <!-- View's don't have foreground until API 23 so we have to nest in a parent. -->
-            <Button
-                android:id="@+id/exo_rew_with_amount"
-                android:layout_width="@dimen/exo_icon_size"
-                android:layout_height="@dimen/exo_icon_size"
-                android:layout_marginLeft="0dp"
-                android:layout_marginRight="0dp"
-                android:background="@drawable/exo_styled_controls_rewind"
-                android:backgroundTint="@android:color/white"
-                android:foreground="@drawable/exo_styled_controls_rewind"
-                android:gravity="center|bottom"
-                android:insetBottom="0dp"
-                android:paddingBottom="@dimen/exo_icon_padding_bottom"
-                android:scaleType="fitXY"
-                android:textAppearance="@style/ExoStyledControls.ButtonText" />
-        </FrameLayout>
-
         <ImageButton
             android:id="@+id/play_pause"
             android:layout_width="@dimen/exo_icon_size"
@@ -178,29 +152,6 @@
             android:scaleType="fitXY"
             android:src="@drawable/exo_styled_controls_play" />
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="0dp"
-            android:layout_marginLeft="@dimen/exo_icon_horizontal_margin"
-            android:layout_marginRight="@dimen/exo_icon_horizontal_margin"
-            android:scaleType="fitXY">
-            <!-- View's don't have foreground until API 23 so we have to nest in a parent. -->
-            <Button
-                android:id="@+id/exo_ffwd_with_amount"
-                android:layout_width="@dimen/exo_icon_size"
-                android:layout_height="@dimen/exo_icon_size"
-                android:layout_marginLeft="0dp"
-                android:layout_marginRight="0dp"
-                android:background="@drawable/exo_styled_controls_fastforward"
-                android:backgroundTint="@android:color/white"
-                android:foreground="@drawable/exo_styled_controls_fastforward"
-                android:gravity="center|bottom"
-                android:insetBottom="0dp"
-                android:paddingBottom="@dimen/exo_icon_padding_bottom"
-                android:scaleType="fitXY"
-                android:textAppearance="@style/ExoStyledControls.ButtonText" />
-        </FrameLayout>
 
         <ImageButton
             android:id="@+id/next"

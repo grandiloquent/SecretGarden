@@ -177,7 +177,7 @@ char *get_cookie() {
 }
 
 JNIEXPORT jstring JNICALL
-Java_euphoria_psycho_porn_Native_fetch91Porn(JNIEnv *env, jclass clazz, jstring url) {
+Java_psycho_euphoria_v_Native_fetch91Porn(JNIEnv *env, jclass clazz, jstring url) {
 
     /*
     char *k = get_cookie();
@@ -305,7 +305,7 @@ Java_euphoria_psycho_porn_Native_fetch91Porn(JNIEnv *env, jclass clazz, jstring 
 }
 
 JNIEXPORT jstring JNICALL
-Java_euphoria_psycho_porn_Native_fetchCk(JNIEnv *env, jclass clazz, jstring url, jstring cookie,
+Java_psycho_euphoria_v_Native_fetchCk(JNIEnv *env, jclass clazz, jstring url, jstring cookie,
                                          jstring userAgent) {
     char *url_ = (char *) (*env)->GetStringUTFChars(env, url, NULL);
     char *cookie_ = cookie != NULL ? (char *) (*env)->GetStringUTFChars(env, cookie, NULL) : NULL;

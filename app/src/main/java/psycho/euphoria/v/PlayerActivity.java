@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
@@ -17,10 +18,14 @@ import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
@@ -28,6 +33,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
@@ -57,7 +63,8 @@ import psycho.euphoria.v.TimeBar.OnScrubListener;
 import static psycho.euphoria.v.PlayerUtils.hideSystemUI;
 import static psycho.euphoria.v.Shared.getStringForTime;
 
-public class PlayerActivity extends Activity implements OnTouchListener {
+public class PlayerActivity extends Activity {
+
 
     public static final int DEFAULT_HIDE_TIME_DELAY = 5000;
     public static final String KEY_SHUFFLE = "shuffle";
@@ -90,18 +97,67 @@ public class PlayerActivity extends Activity implements OnTouchListener {
     private final Runnable mHideAction = this::hiddenControls;
     private boolean mShuffle;
     private float mSpeed = .5f;
+    Matrix matrix = new Matrix();
+    float lastFocusX = 0;
+    float lastFocusY = 0;
+    ScaleGestureDetector scaleGestureDetector;
 
-    public static void launchActivity(Context context, File videoFile, int sort) {
-        Intent intent = new Intent(context, PlayerActivity.class);
-        intent.putExtra(KEY_VIDEO_FILE, videoFile.getAbsolutePath());
-        intent.putExtra("sort", sort);
-        context.startActivity(intent);
+    public boolean applyLimitsToMatrix() {
+        // Do not continue if matrix has no translations or scales applied to it. (This is an optimization.)
+        if (this.matrix.isIdentity()) {
+            return false;
+        }
+        // Fetch matrix values.
+        float[] matrixValues = new float[9];
+        this.matrix.getValues(matrixValues);
+        // Do not allow scale to be less than 1x.
+        if ((matrixValues[Matrix.MSCALE_X] < 1.0f) || (matrixValues[Matrix.MSCALE_Y] < 1.0f)) {
+            this.matrix.reset();
+            return true;
+        }
+        // Do not allow scale to be greater than 5x.
+        final float MAX_SCALE = 5.0f;
+        if ((matrixValues[Matrix.MSCALE_X] > MAX_SCALE) || (matrixValues[Matrix.MSCALE_Y] > MAX_SCALE)) {
+            this.matrix.postScale(
+                    MAX_SCALE / matrixValues[Matrix.MSCALE_X], MAX_SCALE / matrixValues[Matrix.MSCALE_Y],
+                    mTextureView.getWidth() / 2.0f, mTextureView.getHeight() / 2.0f);
+            this.matrix.getValues(matrixValues);
+        }
+        // Fetch min/max bounds the image can be scrolled to, preventing image from being scrolled off-screen.
+        float translateX = -matrixValues[Matrix.MTRANS_X];
+        float translateY = -matrixValues[Matrix.MTRANS_Y];
+        float maxTranslateX = (mTextureView.getWidth() * matrixValues[Matrix.MSCALE_X]) - mTextureView.getWidth();
+        float maxTranslateY = (mTextureView.getHeight() * matrixValues[Matrix.MSCALE_Y]) - mTextureView.getHeight();
+        // Apply translation limits.
+        boolean wasChanged = false;
+        if (translateX < 0) {
+            this.matrix.postTranslate(translateX, 0);
+            wasChanged = true;
+        } else if (translateX > maxTranslateX) {
+            this.matrix.postTranslate(translateX - maxTranslateX, 0);
+            wasChanged = true;
+        }
+        if (translateY < 0) {
+            this.matrix.postTranslate(0, translateY);
+            wasChanged = true;
+        } else if (translateY > maxTranslateY) {
+            this.matrix.postTranslate(0, translateY - maxTranslateY);
+            wasChanged = true;
+        }
+        return wasChanged;
     }
 
     public static void launchActivity(Context context, String videoFile, String title) {
         Intent intent = new Intent(context, PlayerActivity.class);
         intent.putExtra(KEY_VIDEO_FILE, videoFile);
         intent.putExtra(KEY_VIDEO_TITLE, title);
+        context.startActivity(intent);
+    }
+
+    public static void launchActivity(Context context, File videoFile, int sort) {
+        Intent intent = new Intent(context, PlayerActivity.class);
+        intent.putExtra(KEY_VIDEO_FILE, videoFile.getAbsolutePath());
+        intent.putExtra("sort", sort);
         context.startActivity(intent);
     }
 
@@ -124,12 +180,15 @@ public class PlayerActivity extends Activity implements OnTouchListener {
     }
 
     private void bindingDeleteVideoEvent() {
-        findViewById(R.id.action_file_download).setOnClickListener(v -> new AlertDialog.Builder(PlayerActivity.this).setTitle("询问").setMessage("确定要删除 \"" + Shared.substringAfterLast(mPlayList.get(mPlayIndex), "/") + "\" 视频吗？").setPositiveButton(android.R.string.ok, (dialog, which) -> {
-            deleteVideo();
-            dialog.dismiss();
-        }).setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-            dialog.dismiss();
-        }).show());
+        findViewById(R.id.action_file_download).setOnClickListener(v ->{
+            this.finish();
+        });
+        //  findViewById(R.id.action_file_download).setOnClickListener(v -> new AlertDialog.Builder(PlayerActivity.this).setTitle("询问").setMessage("确定要删除 \"" + Shared.substringAfterLast(mPlayList.get(mPlayIndex), "/") + "\" 视频吗？").setPositiveButton(android.R.string.ok, (dialog, which) -> {
+          //  deleteVideo();
+            //dialog.dismiss();
+        //}).setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+          //  dialog.dismiss();
+        //}).show());
     }
 
     private void deleteVideo() {
@@ -165,8 +224,8 @@ public class PlayerActivity extends Activity implements OnTouchListener {
         mTimeBar.setVisibility(View.GONE);
         mBottomBar.setVisibility(View.GONE);
         mCenterControls.setVisibility(View.GONE);
-        hideSystemUI(this);
-        zoomIn();
+        //hideSystemUI(this);
+        //zoomIn();
     }
 
     private void initializePlayer() {
@@ -317,7 +376,7 @@ public class PlayerActivity extends Activity implements OnTouchListener {
         if (mPlayList == null) {
             Log.e("B5aOx2", String.format("play, %s", getIntent().getStringExtra(KEY_VIDEO_FILE) == null));
             String url = getIntent().getStringExtra(KEY_VIDEO_FILE);
-            if (url == null) url = PlayerHelper.TEST_M3U8_URL;
+            if (url == null) url = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/1.v";
             mMediaPlayer.setDataSource(url);
             mMediaPlayer.prepareAsync();
             return;
@@ -330,26 +389,6 @@ public class PlayerActivity extends Activity implements OnTouchListener {
     private void scheduleHideControls() {
         mHandler.removeCallbacks(mHideAction);
         mHandler.postDelayed(mHideAction, DEFAULT_HIDE_TIME_DELAY);
-    }
-
-    private void setOnSystemUiVisibilityChangeListener() {
-        // When the user touches the screen or uses some hard key, the framework
-        // will change system ui visibility from invisible to visible. We show
-        // the media control and enable system UI (e.g. ActionBar) to be visible at this point
-        getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-
-            @Override
-            public void onSystemUiVisibilityChange(int visibility) {
-                int diff = mLastSystemUiVis ^ visibility;
-                mLastSystemUiVis = visibility;
-                if ((diff & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) != 0 && (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
-                    showControls();
-                    getActionBar().show();
-                    scheduleHideControls();
-                    zoomOut();
-                }
-            }
-        });
     }
 
     private void showControls() {
@@ -401,44 +440,7 @@ public class PlayerActivity extends Activity implements OnTouchListener {
 
     }
 
-    private void zoomOut() {
-        if (mMediaPlayer == null) {
-            return;
-        }
-        if (mPlayerSizeInformation == null) {
-            mPlayerSizeInformation = new PlayerSizeInformation(this, mRoot, mBottomBar, mTimeBar);
-        }
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == 1) {
-            mPlayerSizeInformation = new PlayerSizeInformation(this, mRoot, mBottomBar, mTimeBar);
-            int videoHeight = mMediaPlayer.getVideoHeight();
-            int videoWidth = mMediaPlayer.getVideoWidth();
-            float x = ((float) mPlayerSizeInformation.getAvailableWidth()) / videoWidth;
-            float y = ((float) mPlayerSizeInformation.getPortraitHeight()) / videoHeight;
-            x = Math.min(x, y);
-            int screenWidth = (int) (videoWidth * x);
-            int screenHeight = (int) (videoHeight * x);
-            LayoutParams layoutParams = new LayoutParams(screenWidth, screenHeight);
-            layoutParams.topMargin = (mPlayerSizeInformation.getPortraitHeight() - screenHeight) >> 1;
-            layoutParams.leftMargin = (mPlayerSizeInformation.getAvailableWidth() - screenWidth) >> 1;
-            mTextureView.setLayoutParams(layoutParams);
-        } else {
-            int videoHeight = mMediaPlayer.getVideoHeight();
-            int videoWidth = mMediaPlayer.getVideoWidth();
-            float x = ((float) mPlayerSizeInformation.getAvailableHeight()) / videoWidth;
-            float y = ((float) mPlayerSizeInformation.getLandscapeHeight()) / videoHeight;
-            x = Math.min(x, y);
-            int screenWidth = (int) (videoWidth * x);
-            int screenHeight = (int) (videoHeight * x);
-            LayoutParams layoutParams = new LayoutParams(screenWidth, screenHeight);
-            layoutParams.topMargin = (mPlayerSizeInformation.getLandscapeHeight() - screenHeight) >> 1;
-            layoutParams.leftMargin = (mPlayerSizeInformation.getAvailableHeight() - screenWidth - mPlayerSizeInformation.getNavigationBarLanscapeHeight()) >> 1;
-            mTextureView.setLayoutParams(layoutParams);
-            //Log.e("B5aOx2", String.format("zoomOut, %s", mPlayerSizeInformation.toString()));
-        }
-
-
-    }
+    Matrix mMatrix;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -454,8 +456,9 @@ public class PlayerActivity extends Activity implements OnTouchListener {
 //            scheduleHideControls();
 //
 //        });
-        setOnSystemUiVisibilityChangeListener();
+        //setOnSystemUiVisibilityChangeListener();
         hideSystemUI(this);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 //        View decorView = getWindow().getDecorView();
 //        decorView.setOnSystemUiVisibilityChangeListener
 //                (visibility -> {
@@ -474,6 +477,7 @@ public class PlayerActivity extends Activity implements OnTouchListener {
 //                });
         mCenterControls = findViewById(R.id.exo_center_controls);
         mTextureView = findViewById(R.id.texture_view);
+        mMatrix = mTextureView.getMatrix();
         mPosition = findViewById(R.id.position);
         mBottomBar = findViewById(R.id.exo_bottom_bar);
         mDuration = findViewById(R.id.duration);
@@ -497,6 +501,73 @@ public class PlayerActivity extends Activity implements OnTouchListener {
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
             }
         });
+        scaleGestureDetector = new ScaleGestureDetector(this, new SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                matrix.postScale(
+                        detector.getScaleFactor(), detector.getScaleFactor(),
+                        detector.getFocusX(), detector.getFocusY());
+                matrix.postTranslate(detector.getFocusX() - lastFocusX, detector.getFocusY() - lastFocusY);
+                applyLimitsToMatrix();
+                lastFocusX = detector.getFocusX();
+                lastFocusY = detector.getFocusY();
+                mTextureView.setTransform(matrix);
+                mTextureView.invalidate();
+                return true;
+            }
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                lastFocusX = detector.getFocusX();
+                lastFocusY = detector.getFocusY();
+                return true;
+            }
+
+            @Override
+            public void onScaleEnd(ScaleGestureDetector detector) {
+                if (applyLimitsToMatrix()) {
+                    mTextureView.invalidate();
+                }
+            }
+        });
+        GestureDetector gestureDetector = new GestureDetector(this, new SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+//                // Do not continue if we're in the middle of a pinch-zoom.
+//                if (scaleGestureDetector.isInProgress()) {
+//                    return false;
+//                }
+//                // Fetch zoom position and translation coordinates.
+//                float[] matrixValues = new float[9];
+//                matrix.getValues(matrixValues);
+//                final boolean isZoomingIn = matrix.isIdentity();
+//                final float zoomInScaleFactor = isZoomingIn ? 2.5f : matrixValues[Matrix.MSCALE_X];
+//                final float translateX = matrixValues[Matrix.MTRANS_X];
+//                final float translateY = matrixValues[Matrix.MTRANS_Y];
+//                final float zoomInX = e.getX();
+//                final float zoomInY = e.getY();
+//                float scaleFactor = 1;
+//                matrix.postScale(scaleFactor, scaleFactor);
+//                matrix.postTranslate(-translateX, -translateY);
+                matrix.set(mMatrix);
+                mTextureView.setTransform(matrix);
+                mTextureView.invalidate();
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                showControls();
+                scheduleHideControls();
+                return true;
+            }
+        });
+        mTextureView.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                return gestureDetector.onTouchEvent(motionEvent) || scaleGestureDetector.onTouchEvent(motionEvent);
+            }
+        });
         mTimeBar = findViewById(R.id.timebar);
         mTimeBar.addListener(new OnScrubListener() {
             @Override
@@ -517,67 +588,6 @@ public class PlayerActivity extends Activity implements OnTouchListener {
                 scheduleHideControls();
             }
 
-        });
-        Button rewWithAmount = findViewById(R.id.exo_rew_with_amount);
-        rewWithAmount.setText("2");
-        rewWithAmount.setOnClickListener(v -> {
-//            int dif = mMediaPlayer.getCurrentPosition() - 10000;
-//            if (dif < 0) {
-//                dif = 0;
-//            }
-//            if (VERSION.SDK_INT >= VERSION_CODES.O) {
-//                mMediaPlayer.seekTo(dif);
-//            } else {
-//                mMediaPlayer.seekTo(dif);
-//            }
-            PlaybackParams playbackParams = new PlaybackParams();
-//            mSpeed /= 2;
-//            if (mSpeed > 1 && mSpeed < 2) {
-//                mSpeed = 1;
-//            }
-//            Toast.makeText(this, Float.toString(mSpeed), Toast.LENGTH_SHORT).show();
-//            mSpeed -= .5f; //mSpeed >> 1 == 0 ? 1 : mSpeed >> 1;
-//            if (mSpeed <= 0) mSpeed = 1;
-//            playbackParams.setSpeed(mSpeed);
-//            mMediaPlayer.setPlaybackParams(playbackParams);
-            if (mSpeed == .5f) {
-                mSpeed = 20f;
-            } else if (mSpeed == 20f) {
-                mSpeed = 6f;
-            } else if (mSpeed == 6f) {
-                mSpeed = 1f;
-            }
-            playbackParams.setSpeed(mSpeed);
-            mMediaPlayer.setPlaybackParams(playbackParams);
-            scheduleHideControls();
-            updateProgress();
-        });
-        Button ffwdWithAmount = findViewById(R.id.exo_ffwd_with_amount);
-        ffwdWithAmount.setText("2");
-        Typeface typeface = null;
-        typeface = getResources().getFont(R.font.roboto_medium_numbers);
-        rewWithAmount.setTypeface(typeface);
-        ffwdWithAmount.setTypeface(typeface);
-        ffwdWithAmount.setOnClickListener(v -> {
-//            int dif = mMediaPlayer.getCurrentPosition() + 10000;
-//            if (dif > mMediaPlayer.getDuration()) {
-//                dif = mMediaPlayer.getDuration();
-//            }
-//            if (VERSION.SDK_INT >= VERSION_CODES.O) {
-//                mMediaPlayer.seekTo(dif);
-//
-//            } else {
-//                mMediaPlayer.seekTo(dif);
-//            }
-            PlaybackParams playbackParams = new PlaybackParams();
-            // mSpeed += .5f; //= mSpeed << 1;
-//            if (mSpeed >= 10) {
-//                mSpeed = 6;
-//            }
-//            Toast.makeText(this, Float.toString(mSpeed), Toast.LENGTH_SHORT).show();
-            mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 30 * 1000);
-            scheduleHideControls();
-            updateProgress();
         });
         mPlayPause = findViewById(R.id.play_pause);
         mPlayPause.setOnClickListener(this::onPlayPause);
@@ -608,14 +618,10 @@ public class PlayerActivity extends Activity implements OnTouchListener {
                         String[] pieces = value.split(" ");
                         int total = 0;
                         for (int i = pieces.length - 1, j = 0; i > -1; i--, j++) {
-                            total += Integer.parseInt(pieces[i]) * Math.pow(60, j);
+                            total += (int) (Integer.parseInt(pieces[i]) * Math.pow(60, j));
                         }
                         total *= 1000;
-                        if (VERSION.SDK_INT >= VERSION_CODES.O) {
-                            mMediaPlayer.seekTo(total, MediaPlayer.SEEK_CLOSEST);
-                        } else {
-                            mMediaPlayer.seekTo(total);
-                        }
+                        mMediaPlayer.seekTo(total, MediaPlayer.SEEK_CLOSEST);
                     }
                 });
             }
@@ -637,9 +643,7 @@ public class PlayerActivity extends Activity implements OnTouchListener {
 
         }
 
-
     }
-
 
     @Override
     protected void onStart() {
@@ -659,105 +663,7 @@ public class PlayerActivity extends Activity implements OnTouchListener {
         PlayerHelper.clearSurface(mSurface);
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN: {
-                mLastFocusX = event.getX();
-                showControls();
-                mMediaPlayer.pause();
-                mCurrentPosition = mMediaPlayer.getCurrentPosition();
-                mDelta = 0;
-                break;
-            }
-            case MotionEvent.ACTION_MOVE: {
-                final float scrollX = mLastFocusX - event.getX();
-                if (Math.abs(scrollX) > 1) {
-                    if (scrollX < 0) {
-                        mDelta++;
-                    } else {
-                        mDelta--;
-                    }
-                }
-                mPosition.setText(getStringForTime(mStringBuilder, mFormatter, mCurrentPosition + mDelta * 1000));
-                mLastFocusX = event.getX();
-                break;
-            }
-            case MotionEvent.ACTION_UP: {
-                mMediaPlayer.seekTo(mCurrentPosition + mDelta * 1000);
-                mMediaPlayer.start();
-                scheduleHideControls();
-            }
-        }
-        return true;
-    }
-
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
-        private int mScaledTouchSlop;
-        private int mCurrentTime;
-
-        public GestureListener() {
-            mScaledTouchSlop = ViewConfiguration.get(PlayerActivity.this).getScaledTouchSlop();
-        }
-
-        @Override
-        public boolean onDoubleTap(MotionEvent e) {
-            return true;
-        }
-
-        @Override
-        public boolean onDown(MotionEvent event) {
-            // don't return false here or else none of the other
-            // gestures will work
-            mCurrentTime = mMediaPlayer.getCurrentPosition();
-            return true;
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            return true;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            try {
-                float diffY = e2.getY() - e1.getY();
-                float diffX = e2.getX() - e1.getX();
-                if (Math.abs(diffX) > Math.abs(diffY)) {
-                    // && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD
-                    if (Math.abs(diffX) > mScaledTouchSlop) {
-                        if (diffX > 0) {
-                            mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 1);
-                        } else {
-                        }
-                    }
-                }
-//                else {
-//                    if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-//                        if (diffY > 0) {
-//                        } else {
-//                        }
-//                    }
-//                }
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
-            return true;
-        }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            showControls();
-            scheduleHideControls();
-            return true;
-        }
-    }
-
 }
-
 // https://github.com/devlucem/ZoomableVideo
-
+// https://medium.com/@ali.muzaffar/android-detecting-a-pinch-gesture-64a0a0ed4b41
+// https://github.com/tidev/titanium-sdk/blob/9f5fc19ecbdf97cd49233ead298bda3a0c4fcf06/android/modules/ui/src/java/ti/modules/titanium/ui/widget/TiImageView.java#L446

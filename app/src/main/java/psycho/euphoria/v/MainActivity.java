@@ -368,7 +368,7 @@ public class MainActivity extends Activity {
                 } else if (position == 6) {
                     new Thread(() -> {
                         // 500
-                        for (int i = 0; i < 10; i++) {
+                        for (int i = 0; i < 200; i++) {
                             try {
                                 List<Video> videos = Utils.scrap52Ck(i);
                                 mVideoDatabase.insertVideos(videos);
