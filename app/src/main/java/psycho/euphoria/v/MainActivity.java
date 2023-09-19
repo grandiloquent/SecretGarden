@@ -86,6 +86,10 @@ public class MainActivity extends Activity {
         if (Utils.getKuaiShouVideo(this, query)) {
             return true;
         }
+        int index = mVideosAdapter.search(query);
+        if (index != -1) {
+            mGridView.smoothScrollToPosition(index);
+        }
         return true;
     }
 
@@ -517,6 +521,17 @@ public class MainActivity extends Activity {
         private LruCache<String, BitmapDrawable> mLruCache = new LruCache<>(1000);
         private ExecutorService mExecutorService = Executors.newFixedThreadPool(3);
         private Handler mHandler = new Handler();
+
+        public int search(String pattern) {
+            int i = 0;
+            for (Video video : mVideos) {
+                if (video.Title.contains(pattern)) {
+                    return i;
+                }
+                i++;
+            }
+            return -1;
+        }
 
         public void update(List<Video> videos) {
             mVideos.clear();
