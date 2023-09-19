@@ -595,16 +595,16 @@ public class PlayerActivity extends Activity {
         //mTextureView.setOnTouchListener(this);
         ImageButton prev = findViewById(R.id.prev);
         ImageButton next = findViewById(R.id.next);
-        mShuffle = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(KEY_SHUFFLE, false);
-        findViewById(R.id.action_shuffle).setOnClickListener(v -> {
-            if (!mShuffle) {
-                Collections.shuffle(mPlayList);
-                mPlayIndex = mPlayList.indexOf(mPlayList.get(mPlayIndex));
-            }
-            mShuffle = !mShuffle;
-            PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(KEY_SHUFFLE, mShuffle).apply();
-
-        });
+//        mShuffle = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(KEY_SHUFFLE, false);
+//        findViewById(R.id.action_shuffle).setOnClickListener(v -> {
+//            if (!mShuffle) {
+//                Collections.shuffle(mPlayList);
+//                mPlayIndex = mPlayList.indexOf(mPlayList.get(mPlayIndex));
+//            }
+//            mShuffle = !mShuffle;
+//            PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(KEY_SHUFFLE, mShuffle).apply();
+//
+//        });
         String videoFile = getIntent().getStringExtra(KEY_VIDEO_FILE);
         if (getIntent().getStringExtra(KEY_VIDEO_TITLE) != null)
             this.setTitle(getIntent().getStringExtra(KEY_VIDEO_TITLE));

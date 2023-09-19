@@ -16,13 +16,14 @@ public class VideoDatabase extends SQLiteOpenHelper {
         super(context, name, null, DATABASE_VERSION);
     }
 
-    public void updateVideoType(int id,int i) {
+    public void updateVideoType(int id, int i) {
         getWritableDatabase().execSQL("update videos set video_type = ?,update_at = ? where id = ?", new String[]{
                 Integer.toString(i),
                 Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
         });
     }
+
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -75,6 +76,22 @@ public class VideoDatabase extends SQLiteOpenHelper {
         } finally {
             db.endTransaction();
         }
+    }
+
+    public void updateThumbnails() {
+        Cursor cursor = getReadableDatabase().rawQuery("select id,thumbnail from videos where video_type = 2", null);
+        SQLiteDatabase wd = getWritableDatabase();
+        while (cursor.moveToNext()) {
+            String thumbnail = cursor.getString(1);
+            if (thumbnail.startsWith("https://249999.xyz/")) {
+                thumbnail = thumbnail.replace("https://249999.xyz/", "https://666548.xyz/");
+                wd.execSQL("update videos set thumbnail = ? where id = ?", new String[]{
+                        thumbnail,
+                        Integer.toString(cursor.getInt(0))
+                });
+            }
+        }
+        cursor.close();
     }
 
     public List<Video> queryVideos(String search, int sortBy, int videoType) {

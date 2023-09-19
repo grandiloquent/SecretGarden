@@ -72,6 +72,7 @@ public class VideoItemAdapter extends BaseAdapter {
         }
         viewHolder.title.setText(Shared.substringAfterLast(mVideoItems.get(position).path, "/"));
         viewHolder.thumbnail.setTag(mVideoItems.get(position).path);
+        viewHolder.thumbnail.setBackground(null);
         mExecutorService.submit(new Loader(mContext, viewHolder, mLruCache, mHandler));
         return convertView;
     }

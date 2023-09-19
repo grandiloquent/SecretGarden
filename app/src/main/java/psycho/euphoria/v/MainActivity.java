@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.ProgressDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -68,12 +70,13 @@ public class MainActivity extends Activity {
 
     public static final String KEY_SORT = "sort";
     private static final String KEY_VIDEO_TYPE = "video_type";
+    private static int mVideoType = 2;
     private BottomSheetLayout mRoot;
     private VideoDatabase mVideoDatabase;
     private GridView mGridView;
     private VideosAdapter mVideosAdapter;
-    private static int mVideoType = 2;
     private String mSearch;
+    private int mSort = 0;
 
     public boolean onQueryTextSubmit(String query) {
         // https://v.douyin.com/8kSH3tK
@@ -95,7 +98,6 @@ public class MainActivity extends Activity {
         starter.putExtra(DownloaderService.EXTRA_VIDEO_ADDRESS, videoAddress);
         context.startService(starter);
     }
-
 
     private void askUpdate(VersionInfo versionInfo) {
         AlertDialog dialog = new Builder(this)
@@ -128,6 +130,85 @@ public class MainActivity extends Activity {
 
     }
 
+    private void chooseVideoType() {
+        new Builder(this)
+                .setItems(new String[]{
+                        "91",
+                        "57",
+                        "收藏",
+                        "屏蔽",
+                        "露脸",
+                        "其他"
+
+                }, (dialog1, which) -> {
+                    switch (which) {
+                        case 0:
+                            mVideoType = 1;
+                            break;
+                        case 1:
+                            mVideoType = 2;
+                            break;
+                        case 2:
+                            mVideoType = 3;
+                            break;
+                        case 3:
+                            mVideoType = 4;
+                            break;
+                        case 4:
+                            mVideoType = 5;
+                            break;
+                        case 5:
+                            mVideoType = 6;
+                            break;
+                    }
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                            .edit()
+                            .putInt(KEY_VIDEO_TYPE, mVideoType).apply();
+                    mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+                })
+                .show();
+    }
+
+    private void fetch91Videos() {
+        EditText editText = new EditText(this);
+        AlertDialog dialog = new Builder(this)
+                .setView(editText)
+                .setPositiveButton("确定", (dialog1, which) -> {
+                    dialog1.dismiss();
+                    new Thread(() -> {
+                        int start = 0;
+                        int end = 3;
+                        Pattern pattern = Pattern.compile("\\d+");
+                        Matcher matcher = pattern.matcher(editText.getText());
+                        while (matcher.find()) {
+                            if (start == 0)
+                                start = Integer.parseInt(matcher.group());
+                            else
+                                end = Integer.parseInt(matcher.group());
+                        }
+                        for (int i = start; i < end; i++) {
+                            try {
+                                List<Video> videos = Utils.scrap91Porn(i);
+                                mVideoDatabase.insertVideos(videos);
+                                showProgress(String.format("已成功抓取第 %s 页", i + 1));
+                            } catch (Exception e) {
+                                showProgress(String.format("抓取页面错误：%s", e.getMessage()));
+                            }
+                        }
+
+                    }).start();
+                }).create();
+        dialog.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        dialog.show();
+    }
+
+    private void loadVideos() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mSort = preferences.getInt(KEY_SORT, 0);
+        mVideoType = preferences.getInt(KEY_VIDEO_TYPE, 1);
+        mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+    }
+
     private void performUpdate(VersionInfo versionInfo) {
         File f = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "HuaYuan.apk");
         ProgressDialog dialog = new ProgressDialog(this);
@@ -153,6 +234,38 @@ public class MainActivity extends Activity {
                 }
             });
         }).start();
+    }
+
+    private void sortVideos() {
+        new Builder(this)
+                .setItems(new String[]{
+                        "发布时间最晚",
+                        "发布时间最早",
+                        "更新时间最晚",
+                        "播放次数最多",
+
+                }, (dialog1, which) -> {
+                    switch (which) {
+                        case 0:
+                            mSort = 0;
+                            break;
+                        case 1:
+                            mSort = 1;
+                            break;
+                        case 2:
+                            mSort = 3;
+                            break;
+                        case 3:
+                            mSort = 5;
+                            break;
+
+                    }
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                            .edit()
+                            .putInt(KEY_SORT, mSort).apply();
+                    mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+                })
+                .show();
     }
 
     @Override
@@ -216,14 +329,15 @@ public class MainActivity extends Activity {
                 Helpers.tryGetCookie(this, video);
             }
         }).start());
-
-    }
-
-    private void loadVideos() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mSort = preferences.getInt(KEY_SORT, 0);
-        mVideoType = preferences.getInt(KEY_VIDEO_TYPE, 1);
-        mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+//        new Thread(() -> {
+//            mVideoDatabase.updateThumbnails();
+//            MainActivity.this.runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(MainActivity.this, "完成", Toast.LENGTH_SHORT).show();
+//                }
+//            });
+//        }).start();
     }
 
     @Override
@@ -262,8 +376,10 @@ public class MainActivity extends Activity {
             mVideoDatabase.updateVideoType(video.Id, 5);
             mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
         } else if (item.getItemId() == 4) {
-            mVideoDatabase.updateVideoType(video.Id, 6);
-            mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+            //mVideoDatabase.updateVideoType(video.Id, 6);
+            //mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+            ClipboardManager manager = getSystemService(ClipboardManager.class);
+            manager.setPrimaryClip(ClipData.newPlainText(null, video.Url));
         } else if (item.getItemId() == 5) {
             new Thread(() -> {
                 Helpers.updateSource(this, mVideoDatabase, video);
@@ -396,112 +512,6 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void fetch91Videos() {
-        EditText editText = new EditText(this);
-        AlertDialog dialog = new Builder(this)
-                .setView(editText)
-                .setPositiveButton("确定", (dialog1, which) -> {
-                    dialog1.dismiss();
-                    new Thread(() -> {
-                        int start = 0;
-                        int end = 3;
-                        Pattern pattern = Pattern.compile("\\d+");
-                        Matcher matcher = pattern.matcher(editText.getText());
-                        while (matcher.find()) {
-                            if (start == 0)
-                                start = Integer.parseInt(matcher.group());
-                            else
-                                end = Integer.parseInt(matcher.group());
-                        }
-                        for (int i = start; i < end; i++) {
-                            try {
-                                List<Video> videos = Utils.scrap91Porn(i);
-                                mVideoDatabase.insertVideos(videos);
-                                showProgress(String.format("已成功抓取第 %s 页", i + 1));
-                            } catch (Exception e) {
-                                showProgress(String.format("抓取页面错误：%s", e.getMessage()));
-                            }
-                        }
-
-                    }).start();
-                }).create();
-        dialog.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        dialog.show();
-    }
-
-    private void chooseVideoType() {
-        new Builder(this)
-                .setItems(new String[]{
-                        "91",
-                        "57",
-                        "收藏",
-                        "屏蔽",
-                        "露脸",
-                        "其他"
-
-                }, (dialog1, which) -> {
-                    switch (which) {
-                        case 0:
-                            mVideoType = 1;
-                            break;
-                        case 1:
-                            mVideoType = 2;
-                            break;
-                        case 2:
-                            mVideoType = 3;
-                            break;
-                        case 3:
-                            mVideoType = 4;
-                            break;
-                        case 4:
-                            mVideoType = 5;
-                            break;
-                        case 5:
-                            mVideoType = 6;
-                            break;
-                    }
-                    PreferenceManager.getDefaultSharedPreferences(this)
-                            .edit()
-                            .putInt(KEY_VIDEO_TYPE, mVideoType).apply();
-                    mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
-                })
-                .show();
-    }
-
-    private void sortVideos() {
-        new Builder(this)
-                .setItems(new String[]{
-                        "发布时间最晚",
-                        "发布时间最早",
-                        "更新时间最晚",
-                        "播放次数最多",
-
-                }, (dialog1, which) -> {
-                    switch (which) {
-                        case 0:
-                            mSort = 0;
-                            break;
-                        case 1:
-                            mSort = 1;
-                            break;
-                        case 2:
-                            mSort = 3;
-                            break;
-                        case 3:
-                            mSort = 5;
-                            break;
-
-                    }
-                    PreferenceManager.getDefaultSharedPreferences(this)
-                            .edit()
-                            .putInt(KEY_SORT, mSort).apply();
-                    mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
-                })
-                .show();
-    }
-
-    private int mSort = 0;
-
     private class VideosAdapter extends BaseAdapter {
         private List<Video> mVideos = new ArrayList<>();
         private LruCache<String, BitmapDrawable> mLruCache = new LruCache<>(1000);
@@ -543,6 +553,7 @@ public class MainActivity extends Activity {
             }
             viewHolder.title.setText(mVideos.get(position).Title);
             viewHolder.thumbnail.setTag(mVideos.get(position).Thumbnail);
+            viewHolder.thumbnail.setBackground(null);
             mExecutorService.submit(new Loader(MainActivity.this, viewHolder, mLruCache, mHandler));
             return convertView;
         }
