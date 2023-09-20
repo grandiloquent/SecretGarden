@@ -87,6 +87,7 @@ public class MainActivity extends Activity {
             return true;
         }
         int index = mVideosAdapter.search(query);
+        Log.e("B5aOx2", String.format("onQueryTextSubmit, %s %d", query,index));
         if (index != -1) {
             mGridView.smoothScrollToPosition(index);
         }
@@ -325,7 +326,6 @@ public class MainActivity extends Activity {
             } else {
                 source = old.Source;
             }
-            Log.e("B5aOx2", String.format("onCreate, %s", source));
             if (!TextUtils.isEmpty(source)) {
                 mVideoDatabase.updateViews(video.Id);
                 PlayerActivity.launchActivity(view.getContext(), source, video.Title);
