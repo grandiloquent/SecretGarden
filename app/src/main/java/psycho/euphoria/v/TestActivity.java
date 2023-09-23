@@ -1,6 +1,7 @@
 package psycho.euphoria.v;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.ViewGroup.LayoutParams;
@@ -21,7 +22,7 @@ public class TestActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageFinished(view, url);
                 if (url.contains("vodplay")) {
                     PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
@@ -41,7 +42,26 @@ public class TestActivity extends Activity {
                 }
             }
 
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (url.contains("vodplay")) {
+                    PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
+                            .edit()
+                            .putString(SettingsFragment.KEY_USER_AGENT, webView.getSettings().getUserAgentString())
+                            .putString(SettingsFragment.KEY_CK_COOKIE, CookieManager.getInstance().getCookie(url))
+                            .apply();
 
+                }
+                if (url.contains("cableav.tv")) {
+                    PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
+                            .edit()
+                            .putString(SettingsFragment.KEY_USER_AGENT, webView.getSettings().getUserAgentString())
+                            .putString(SettingsFragment.KEY_CABLE_AV_COOKIE, CookieManager.getInstance().getCookie(url))
+                            .apply();
+
+                }
+
+            }
         });
         setContentView(webView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         webView.loadUrl(getIntent().getStringExtra("url"));

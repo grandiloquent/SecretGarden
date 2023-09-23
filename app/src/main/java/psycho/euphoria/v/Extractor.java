@@ -25,12 +25,19 @@ public class Extractor {
 
     public static Video CableAv(String uri, String userAgent, String cookie) throws Exception {
         // new Proxy(Type.HTTP, new InetSocketAddress(DEFAULT_HOSTNAME, DEFAULT_PORT)
-        HttpsURLConnection c = (HttpsURLConnection) new URL(uri).openConnection();
-        c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-        c.addRequestProperty("Accept-encoding", "gzip, deflate, br");
-        c.addRequestProperty("User-Agent", userAgent);
-        c.addRequestProperty("Cookie", cookie);
-        c.addRequestProperty("Referer", "https://cableav.tv/category/chinese-live-porn/");
+        HttpURLConnection c = (HttpURLConnection) new URL(uri).openConnection();
+        c.addRequestProperty("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+        c.addRequestProperty("accept-encoding", "gzip, deflate, br");
+        c.addRequestProperty("accept-language", "en");
+        c.addRequestProperty("cache-control", "no-cache");
+        c.addRequestProperty("pragma", "no-cache");
+        c.addRequestProperty("referer", "https://cableav.tv/category/chinese-live-porn/");
+        c.addRequestProperty("sec-fetch-dest", "document");
+        c.addRequestProperty("sec-fetch-mode", "navigate");
+        c.addRequestProperty("sec-fetch-site", "same-origin");
+        c.addRequestProperty("sec-fetch-user", "?1");
+        c.addRequestProperty("upgrade-insecure-requests", "1");
+        c.addRequestProperty("user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1");
         Log.e("B5aOx2", String.format("CableAv, %s\n%s\n%s", c.getResponseCode(),
                 userAgent, cookie));
         String contents = Shared.readString(c);
