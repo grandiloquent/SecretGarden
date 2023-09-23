@@ -89,7 +89,20 @@ public class MainActivity extends Activity {
         if (Extractor.checkCableAv(query)) {
             new Thread(() -> {
                 try {
-                    Video video = Extractor.CableAv(query);
+                    Video video = Extractor.CableAv(query, SettingsFragment.getString(this, SettingsFragment.KEY_USER_AGENT, null),
+                            SettingsFragment.getString(this, SettingsFragment.KEY_CABLE_AV_COOKIE, null));
+                    if (video == null) {
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Intent intent = new Intent(MainActivity.this, WebActivity.class);
+                                intent.putExtra("uri", query);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                MainActivity.this.startActivity(intent);
+                            }
+                        });
+                        return;
+                    }
                     List<Video> videos = new ArrayList<>();
                     videos.add(video);
                     mVideoDatabase.insertVideos(videos);

@@ -1,5 +1,7 @@
 package psycho.euphoria.v;
 
+import android.util.Log;
+
 import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
@@ -19,10 +21,16 @@ public class Extractor {
     private final static String DEFAULT_HOSTNAME = "127.0.0.1";
     private final static int DEFAULT_PORT = 10809;
 
-    public static Video CableAv(String uri) throws Exception {
+    public static Video CableAv(String uri, String userAgent, String cookie) throws Exception {
         // new Proxy(Type.HTTP, new InetSocketAddress(DEFAULT_HOSTNAME, DEFAULT_PORT)
-        HttpURLConnection c = (HttpURLConnection) new URL(uri).openConnection();
-        c.addRequestProperty("User-Agent", USER_AGENT_IPHONE_X);
+        HttpsURLConnection c = (HttpsURLConnection) new URL(uri).openConnection();
+        c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+        c.addRequestProperty("Accept-encoding", "gzip, deflate, br");
+        c.addRequestProperty("User-Agent", userAgent);
+        c.addRequestProperty("Cookie", cookie);
+        c.addRequestProperty("Referer", "https://cableav.tv/category/chinese-live-porn/");
+        Log.e("B5aOx2", String.format("CableAv, %s\n%s\n%s", c.getResponseCode(),
+                userAgent, cookie));
         String contents = Shared.readString(c);
         if (contents == null) return null;
         Video video = new Video();

@@ -14,6 +14,8 @@ public class SettingsFragment extends PreferenceFragment implements OnSharedPref
     public static final String KEY_VIDEO_FOLDER = "key_video_folder";
     public static final String KEY_CK_COOKIE = "key_ck_cookie";
     public static final String KEY_91_COOKIE = "key_91_cookie";
+    public static final String KEY_CABLE_AV_COOKIE = "key_cable_av_cookie";
+
     // USER_AGENT user-agent
     public static final String KEY_USER_AGENT = "user-agent";
 

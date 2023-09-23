@@ -50,8 +50,6 @@ public class CustomWebViewClient extends WebViewClient {
 
     @Override
     public void onPageFinished(WebView view, String url) {
-        Log.e("B5aOx2", String.format("onPageFinished, %s", url));
-        Log.e("B5aOx2", String.format("onPageFinished, %s", CookieManager.getInstance().getCookie(url)));
         String cookie;
         if (url.contains("vodplay") && (cookie = CookieManager.getInstance().getCookie(url)) != null) {
             SettingsFragment.setString(mContext, SettingsFragment.KEY_CK_COOKIE, cookie);
@@ -65,6 +63,8 @@ public class CustomWebViewClient extends WebViewClient {
             }).start();
         } else if (url.contains("91porn.com") && (cookie = CookieManager.getInstance().getCookie(url)) != null) {
             SettingsFragment.setString(mContext, SettingsFragment.KEY_91_COOKIE, cookie);
+        } else if (url.contains("cableav.tv") && (cookie = CookieManager.getInstance().getCookie(url)) != null) {
+            SettingsFragment.setString(mContext, SettingsFragment.KEY_CABLE_AV_COOKIE, cookie);
 
 
         }
@@ -92,7 +92,7 @@ public class CustomWebViewClient extends WebViewClient {
             request.getRequestHeaders().forEach(new BiConsumer<String, String>() {
                 @Override
                 public void accept(String s, String s2) {
-                    Log.e("B5aOx2", String.format("accept, %s,%s", s,s2));
+                    Log.e("B5aOx2", String.format("accept, %s,%s", s, s2));
                 }
             });
         }

@@ -116,7 +116,11 @@ public class WebActivity extends Activity {
 
             }
         });
-        mWebView.loadUrl(Native.getUri());
+        String uri = getIntent().getStringExtra("uri");
+        Log.e("B5aOx2", String.format("onCreate, %s", uri));
+        if (uri != null)
+            mWebView.loadUrl(uri);
+        // Native.getUri()
 
     }
 
@@ -167,7 +171,6 @@ public class WebActivity extends Activity {
         try {
             Log.e("B5aOx2", String.format("process91Porn, %s", videoAddress));
             HttpURLConnection c = (HttpURLConnection) new URL(videoAddress).openConnection(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809)));
-
             c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             c.addRequestProperty("Accept-Encoding", "gzip, deflate");
             c.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
@@ -231,7 +234,7 @@ public class WebActivity extends Activity {
 
     public static Pair<String, String> processCk(Context context, String videoAddress) {
         String response = Native.fetchCk(videoAddress, SettingsFragment.getString(context,
-                SettingsFragment.KEY_CK_COOKIE, null),
+                        SettingsFragment.KEY_CK_COOKIE, null),
                 SettingsFragment.getString(context,
                         SettingsFragment.KEY_USER_AGENT, null));
         if (response == null) {
