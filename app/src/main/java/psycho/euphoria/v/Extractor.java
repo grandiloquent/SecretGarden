@@ -21,6 +21,8 @@ public class Extractor {
     private final static String DEFAULT_HOSTNAME = "127.0.0.1";
     private final static int DEFAULT_PORT = 10809;
 
+    public static final String CABEL_TV_HOME_PAGE = "https://cableav.tv";
+
     public static Video CableAv(String uri, String userAgent, String cookie) throws Exception {
         // new Proxy(Type.HTTP, new InetSocketAddress(DEFAULT_HOSTNAME, DEFAULT_PORT)
         HttpsURLConnection c = (HttpsURLConnection) new URL(uri).openConnection();

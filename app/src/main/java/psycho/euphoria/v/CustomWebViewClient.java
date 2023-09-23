@@ -72,6 +72,10 @@ public class CustomWebViewClient extends WebViewClient {
 
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        String cookie;
+        if (url.contains("cableav.tv") && (cookie = CookieManager.getInstance().getCookie(url)) != null) {
+            SettingsFragment.setString(mContext, SettingsFragment.KEY_CABLE_AV_COOKIE, cookie);
+        }
         super.onPageStarted(view, url, favicon);
     }
 

@@ -78,6 +78,17 @@ public class MainActivity extends Activity {
     private String mSearch;
     private int mSort = 0;
 
+    public void browserEmbededWeb(String uri) {
+        Intent intent = new Intent(MainActivity.this, TestActivity.class);
+        intent.putExtra("url", uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        MainActivity.this.startActivity(intent);
+    }
+
+    public void browserOnUiThread(String uri) {
+        browserEmbededWeb(uri);
+    }
+
     public boolean onQueryTextSubmit(String query) {
         // https://v.douyin.com/8kSH3tK
         if (Utils.getDouYinVideo(this, query)) {
@@ -89,18 +100,15 @@ public class MainActivity extends Activity {
         if (Extractor.checkCableAv(query)) {
             new Thread(() -> {
                 try {
+                    String cookie = SettingsFragment.getString(this, SettingsFragment.KEY_CABLE_AV_COOKIE, null);
+                    if (cookie == null) {
+                        browserOnUiThread(Extractor.CABEL_TV_HOME_PAGE);
+                        return;
+                    }
                     Video video = Extractor.CableAv(query, SettingsFragment.getString(this, SettingsFragment.KEY_USER_AGENT, null),
-                            SettingsFragment.getString(this, SettingsFragment.KEY_CABLE_AV_COOKIE, null));
+                            cookie);
                     if (video == null) {
-                        MainActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Intent intent = new Intent(MainActivity.this, WebActivity.class);
-                                intent.putExtra("uri", query);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                MainActivity.this.startActivity(intent);
-                            }
-                        });
+                        browserOnUiThread(Extractor.CABEL_TV_HOME_PAGE);
                         return;
                     }
                     List<Video> videos = new ArrayList<>();
