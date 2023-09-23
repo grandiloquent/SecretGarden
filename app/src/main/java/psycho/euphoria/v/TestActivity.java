@@ -31,6 +31,14 @@ public class TestActivity extends Activity {
                             .apply();
 
                 }
+                if (url.contains("cableav.tv")) {
+                    PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
+                            .edit()
+                            .putString(SettingsFragment.KEY_USER_AGENT, webView.getSettings().getUserAgentString())
+                            .putString(SettingsFragment.KEY_CABLE_AV_COOKIE, CookieManager.getInstance().getCookie(url))
+                            .apply();
+
+                }
             }
 
 
