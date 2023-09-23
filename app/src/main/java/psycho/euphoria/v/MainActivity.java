@@ -86,10 +86,35 @@ public class MainActivity extends Activity {
         if (Utils.getKuaiShouVideo(this, query)) {
             return true;
         }
+        if (Extractor.checkCableAv(query)) {
+            new Thread(() -> {
+                try {
+                    Video video = Extractor.CableAv(query);
+                    List<Video> videos = new ArrayList<>();
+                    videos.add(video);
+                    mVideoDatabase.insertVideos(videos);
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "完成", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+            }).start();
+            return true;
+        }
         int index = mVideosAdapter.search(query);
-        Log.e("B5aOx2", String.format("onQueryTextSubmit, %s %d", query,index));
         if (index != -1) {
-            mGridView.smoothScrollToPosition(index);
+            mGridView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mGridView.setSelection(index);
+                    mGridView.smoothScrollToPosition(index);
+                }
+            });
         }
         return true;
     }
@@ -143,7 +168,8 @@ public class MainActivity extends Activity {
                         "收藏",
                         "屏蔽",
                         "露脸",
-                        "其他"
+                        "其他",
+                        "视频"
 
                 }, (dialog1, which) -> {
                     switch (which) {
@@ -164,6 +190,9 @@ public class MainActivity extends Activity {
                             break;
                         case 5:
                             mVideoType = 6;
+                            break;
+                        case 6:
+                            mVideoType = 9;
                             break;
                     }
                     PreferenceManager.getDefaultSharedPreferences(this)
@@ -434,7 +463,7 @@ public class MainActivity extends Activity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 mSearch = query;
-                mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, 0, mVideoType));
+                mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
                 searchView.clearFocus();
                 // searchView.setIconified(true);
                 return true;
@@ -503,15 +532,16 @@ public class MainActivity extends Activity {
             });
             mRoot.showWithSheetView(gridView);
         } else if (item.getItemId() == R.id.action_refresh) {
-            mVideoType = 1;
-            mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
-            if (mSort == 0) {
-                mSort = 3;
-            } else if (mSort == 3) {
-                mSort = 5;
-            } else if (mSort == 5) {
-                mSort = 0;
-            }
+//            mVideoType = 1;
+//            mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+//            if (mSort == 0) {
+//                mSort = 3;
+//            } else if (mSort == 3) {
+//                mSort = 5;
+//            } else if (mSort == 5) {
+//                mSort = 0;
+//            }
+            Process.killProcess(Process.myPid());
         }
         return super.onOptionsItemSelected(item);
     }

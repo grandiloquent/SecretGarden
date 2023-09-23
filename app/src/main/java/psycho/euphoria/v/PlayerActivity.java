@@ -180,14 +180,14 @@ public class PlayerActivity extends Activity {
     }
 
     private void bindingDeleteVideoEvent() {
-        findViewById(R.id.action_file_download).setOnClickListener(v ->{
+        findViewById(R.id.action_file_download).setOnClickListener(v -> {
             this.finish();
         });
         //  findViewById(R.id.action_file_download).setOnClickListener(v -> new AlertDialog.Builder(PlayerActivity.this).setTitle("询问").setMessage("确定要删除 \"" + Shared.substringAfterLast(mPlayList.get(mPlayIndex), "/") + "\" 视频吗？").setPositiveButton(android.R.string.ok, (dialog, which) -> {
-          //  deleteVideo();
-            //dialog.dismiss();
+        //  deleteVideo();
+        //dialog.dismiss();
         //}).setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-          //  dialog.dismiss();
+        //  dialog.dismiss();
         //}).show());
     }
 
@@ -374,14 +374,13 @@ public class PlayerActivity extends Activity {
 
     private void play() throws IOException {
         if (mPlayList == null) {
-            Log.e("B5aOx2", String.format("play, %s", getIntent().getStringExtra(KEY_VIDEO_FILE) == null));
             String url = getIntent().getStringExtra(KEY_VIDEO_FILE);
             if (url == null) url = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/1.v";
             mMediaPlayer.setDataSource(url);
             mMediaPlayer.prepareAsync();
             return;
         }
-        getActionBar().setTitle(Shared.substringAfterLast(mPlayList.get(mPlayIndex), "/"));
+        Toast.makeText(this, Shared.substringAfterLast(mPlayList.get(mPlayIndex), "/"), Toast.LENGTH_SHORT).show();
         mMediaPlayer.setDataSource(mPlayList.get(mPlayIndex));
         mMediaPlayer.prepareAsync();
     }
@@ -607,7 +606,7 @@ public class PlayerActivity extends Activity {
 //        });
         String videoFile = getIntent().getStringExtra(KEY_VIDEO_FILE);
         if (getIntent().getStringExtra(KEY_VIDEO_TITLE) != null)
-            this.setTitle(getIntent().getStringExtra(KEY_VIDEO_TITLE));
+            Toast.makeText(this, getIntent().getStringExtra(KEY_VIDEO_TITLE), Toast.LENGTH_LONG).show();
         findViewById(R.id.action_speed).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
