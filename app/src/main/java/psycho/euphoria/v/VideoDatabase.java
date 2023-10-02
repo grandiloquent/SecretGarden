@@ -121,7 +121,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
                 // ,views DESC
                 cursor = getReadableDatabase().rawQuery("select * from videos where views >= 1 and video_type = ? ORDER by  update_at DESC", new String[]{Integer.toString(videoType)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at ESC", new String[]{Integer.toString(videoType), "%" + search + "%"});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC", new String[]{Integer.toString(videoType), "%" + search + "%"});
             }
         } else {
             if (search == null) {
@@ -181,7 +181,8 @@ public class VideoDatabase extends SQLiteOpenHelper {
     }
 
     public void updateViews(int id) {
-        getWritableDatabase().execSQL("update videos set views = coalesce(views, 0)+1 where id = ?", new String[]{
+        getWritableDatabase().execSQL("update videos set views = coalesce(views, 0)+1,update_at = ? where id = ?", new String[]{
+                Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
         });
     }
