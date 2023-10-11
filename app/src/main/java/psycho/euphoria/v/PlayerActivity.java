@@ -163,7 +163,7 @@ public class PlayerActivity extends Activity {
 
     static File[] listVideoFiles(String dir) {
         File directory = new File(dir);
-        Pattern pattern = Pattern.compile("\\.(?:mp4|vm|crdownload)$");
+        Pattern pattern = Pattern.compile("\\.(?:v|vm|crdownload)$");
         File[] files = directory.listFiles(file -> file.isFile() && pattern.matcher(file.getName()).find());
         if (files == null || files.length == 0) return null;
         Arrays.sort(files, (o1, o2) -> {

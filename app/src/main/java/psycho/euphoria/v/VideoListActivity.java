@@ -80,6 +80,12 @@ public class VideoListActivity extends Activity {
     private void loadFolder(String filter, int sort) {
         File dir = new File(mDirectory);
         File[] videos = dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".mp4") && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
+        if (videos != null) {
+            for (File f : videos) {
+                f.renameTo(new File(f.getParentFile(), Shared.substringBefore(f.getName(), ".mp4") + ".v"));
+            }
+        }
+        videos = dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".v") && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
         if (videos == null) {
             return;
         }
@@ -145,7 +151,7 @@ public class VideoListActivity extends Activity {
         mGridView.setAdapter(mVideoItemAdapter);
         mGridView.setOnItemClickListener((parent, view, position, id) -> PlayerActivity.launchActivity(view.getContext(), new File(
                 mVideoItemAdapter.getItem(position).path
-        ),mSort));
+        ), mSort));
         getActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }
