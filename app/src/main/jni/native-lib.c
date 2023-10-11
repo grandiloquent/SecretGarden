@@ -455,7 +455,7 @@ static void delete_contents(const char *directory) {
 */
 
 JNIEXPORT void JNICALL
-Java_euphoria_psycho_porn_Native_removeDirectory(JNIEnv *env, jclass clazz, jstring directory) {
+Java_psycho_euphoria_v_Native_removeDirectory(JNIEnv *env, jclass clazz, jstring directory) {
     char *directory_ =
             directory != NULL ? (char *) (*env)->GetStringUTFChars(env, directory, NULL) : NULL;
     if (directory == NULL)
