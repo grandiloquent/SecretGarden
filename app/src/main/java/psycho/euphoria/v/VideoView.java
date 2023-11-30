@@ -65,7 +65,7 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
             @Override
             public boolean onSingleTapUp(MotionEvent ev) {
                 if (mListener != null)
-                    mListener.onClick();
+                    mListener.onVideoClick();
                 return true;
             }
         };
@@ -105,7 +105,7 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
         };
         mScaleDetector = new ScaleGestureDetector(getContext(), scaleListener);
         mTextureVideoView.setOnPreparedListener(this);
-
+        mTextureVideoView.setOnTouchListener(this::onTouch);
 
     }
 
@@ -176,20 +176,15 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
     }
 
     private void zoomAt(float x, float y) {
-//        Matrix startMatrix = mTextureVideoView.getMatrix();
-//        Matrix endMatrix = new Matrix();
-//        RectF currentImageRect = new RectF();
-//        startMatrix.mapRect(currentImageRect, mBitmapRect);
-//        // if (currentImageRect.width() < mWidth - TOLERANCE) {
-//        float scale = ((float) mWidth) / currentImageRect.width();
-//        Log.e("B5aOx2", String.format("zoomAt, %s", scale));
-//        endMatrix.set(startMatrix);
-        m.postScale(DEFAULT_SCALING, DEFAULT_SCALING, x, y);
+        float[] values = new float[9];
+        m.getValues(values);
+        if(values[Matrix.MSCALE_X]>=DEFAULT_SCALING){
+            m=new Matrix();
+        }else {
+            m.postScale(DEFAULT_SCALING, DEFAULT_SCALING, x, y);
+        }
         mTextureVideoView.setAnimationMatrix(m);
-//        } else {
-//            endMatrix.setRectToRect(mBitmapRect, mInitialRect, Matrix.ScaleToFit.CENTER);
-//            mTextureVideoView.setAnimationMatrix(endMatrix);
-//        }
+
     }
 
     @Override
@@ -220,7 +215,7 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
     public interface Listener {
         void onDurationChange(int duration);
 
-        void onClick();
+        void onVideoClick();
 
     }
 }

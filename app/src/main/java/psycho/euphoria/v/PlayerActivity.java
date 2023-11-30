@@ -3,10 +3,13 @@ package psycho.euphoria.v;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
 import java.io.File;
@@ -31,6 +34,10 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     }
 
     public static void launchActivity(Context context, String source, String title) {
+        Intent intent = new Intent(context, PlayerActivity.class);
+        intent.putExtra(KEY_VIDEO_TITLE, title);
+        intent.setData(Uri.parse(source));
+        context.startActivity(intent);
     }
 
     @Override
@@ -40,14 +47,19 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
         mVideoView = findViewById(R.id.video_view);
         mVideoView.setListener(this);
         mWrapper = findViewById(R.id.wrapper);
-        mWrapper.setVisibility(View.INVISIBLE);
         mTimeBar = findViewById(R.id.time_bar);
         mTimeBar.addListener(this);
+        hideSchedule();
         Intent intent = getIntent();
         if (intent.hasExtra(KEY_VIDEO_FILE)) {
             mVideoView.playVideo(intent.getStringExtra(KEY_VIDEO_FILE));
             Toast.makeText(this, intent.getStringExtra(KEY_VIDEO_TITLE), Toast.LENGTH_LONG).show();
+        } else {
+            Uri uri = intent.getData();
+            mVideoView.playVideo(uri);
+            Toast.makeText(this, intent.getStringExtra(KEY_VIDEO_TITLE), Toast.LENGTH_LONG).show();
         }
+
     }
 
     @Override
@@ -57,13 +69,13 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     }
 
     @Override
-    public void onClick() {
+    public void onVideoClick() {
         mWrapper.setVisibility(View.VISIBLE);
+        hideSchedule();
     }
 
     @Override
     public void onDurationChange(int duration) {
-        Log.e("B5aOx2", String.format("onDurationChange, %s", ""));
         mTimeBar.setDuration(duration);
         mTimeBar.setPosition(0);
     }
@@ -79,6 +91,7 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
 
     @Override
     public void onScrubStop(TimeBar timeBar, long position, boolean canceled) {
+        mVideoView.seekTo((int) position);
         hideSchedule();
     }
 
