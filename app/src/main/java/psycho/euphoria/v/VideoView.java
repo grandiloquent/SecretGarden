@@ -1,10 +1,10 @@
 package psycho.euphoria.v;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Matrix;
-import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -16,7 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-public class VideoView extends FrameLayout {
+public class VideoView extends FrameLayout implements OnPreparedListener {
     private static final int DEFAULT_SCALING = 3;
     private static final int IDLE = 0;
     private static final int SCALE = 1;
@@ -31,9 +31,9 @@ public class VideoView extends FrameLayout {
     private float mLastScalePivotY;
     private int mWidth;
     private RectF mVideoRect;
-    private RectF mInitialRect;
+    private RectF mViewportRectangle;
+    private Listener mListener;
 
-    @SuppressLint("ClickableViewAccessibility")
     public VideoView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mTextureVideoView = new TextureVideoView(getContext());
@@ -64,7 +64,8 @@ public class VideoView extends FrameLayout {
 
             @Override
             public boolean onSingleTapUp(MotionEvent ev) {
-                Log.e("B5aOx2", String.format("onSingleTapUp,%s", ev.getY()));
+                if (mListener != null)
+                    mListener.onClick();
                 return true;
             }
         };
@@ -75,7 +76,15 @@ public class VideoView extends FrameLayout {
                 float scaleFactor = detector.getScaleFactor();
                 mLastScalePivotX = detector.getFocusX();
                 mLastScalePivotY = detector.getFocusY();
-                m.postScale(scaleFactor, scaleFactor, mLastScalePivotX, mLastScalePivotY);
+                Matrix temporaryMatrix = new Matrix();
+                temporaryMatrix.set(m);
+                temporaryMatrix.postScale(scaleFactor, scaleFactor, mLastScalePivotX, mLastScalePivotY);
+                float[] values = new float[9];
+                temporaryMatrix.getValues(values);
+                if (values[Matrix.MSCALE_X] < 1 || values[Matrix.MSCALE_Y] < 1) {
+                    return true;
+                }
+                m = temporaryMatrix;
                 mTextureVideoView.setAnimationMatrix(m);
                 return true;
             }
@@ -95,16 +104,13 @@ public class VideoView extends FrameLayout {
 
         };
         mScaleDetector = new ScaleGestureDetector(getContext(), scaleListener);
-        mTextureVideoView.setOnTouchListener(this::onTouch);
-        mTextureVideoView.setOnPreparedListener(mediaPlayer -> {
-            int renderWidth = mTextureVideoView.getMeasuredWidth();
-            int renderHeight = mTextureVideoView.getMeasuredHeight();
-            int videoWidth = mediaPlayer.getVideoWidth();
-            int videoHeight = mediaPlayer.getVideoHeight();
-            mVideoRect = new RectF(0, 0, videoWidth, videoHeight);
-            mInitialRect = new RectF(0, 0, videoWidth, videoHeight);
-        });
+        mTextureVideoView.setOnPreparedListener(this);
 
+
+    }
+
+    public int getDuration() {
+        return mTextureVideoView.getDuration();
     }
 
     public boolean onTouch(View view, MotionEvent ev) {
@@ -121,16 +127,24 @@ public class VideoView extends FrameLayout {
         return mScaleDetector.onTouchEvent(ev) || ret;
     }
 
+    public void playVideo(Uri uri) {
+        mTextureVideoView.setVideoURI(uri);
+        //mTextureVideoView.setVideoURI(Uri.parse("https://jvod.300hu.com/vod/product/9a7f27c0-e537-490a-9e24-ea2e3eaf35a6/999d6c2bf49c44d59013589923fe1be0.mp4?source=2&h265=h265/18799/04e80c7dfbc44aa78060737caa2f7fc2.mp4"));
+        mTextureVideoView.start();
+    }
+
     public void playVideo(String path) {
         mTextureVideoView.setVideoPath(path);
         //mTextureVideoView.setVideoURI(Uri.parse("https://jvod.300hu.com/vod/product/9a7f27c0-e537-490a-9e24-ea2e3eaf35a6/999d6c2bf49c44d59013589923fe1be0.mp4?source=2&h265=h265/18799/04e80c7dfbc44aa78060737caa2f7fc2.mp4"));
         mTextureVideoView.start();
     }
 
-    public void playVideo(Uri uri) {
-        mTextureVideoView.setVideoURI(uri);
-        //mTextureVideoView.setVideoURI(Uri.parse("https://jvod.300hu.com/vod/product/9a7f27c0-e537-490a-9e24-ea2e3eaf35a6/999d6c2bf49c44d59013589923fe1be0.mp4?source=2&h265=h265/18799/04e80c7dfbc44aa78060737caa2f7fc2.mp4"));
-        mTextureVideoView.start();
+    public void setListener(Listener listener) {
+        mListener = listener;
+    }
+
+    public void suspend() {
+        mTextureVideoView.suspend();
     }
 
     private void snapBack() {
@@ -144,14 +158,12 @@ public class VideoView extends FrameLayout {
         }
         float offsetX = 0;
         float offsetY = 0;
-        if (endRect.left > 0)
-            offsetX = -endRect.left;
+        if (endRect.left > 0) offsetX = -endRect.left;
         else {
             float[] values = new float[9];
             m.getValues(values);
             offsetX = Math.abs(values[Matrix.MTRANS_X]) - (values[Matrix.MSCALE_X] - 1) * getMeasuredWidth();
-            if (offsetX < 1)
-                return;
+            if (offsetX < 1) return;
         }
         m.postTranslate(offsetX, offsetY);
         mTextureVideoView.setAnimationMatrix(m);
@@ -159,8 +171,8 @@ public class VideoView extends FrameLayout {
         m.mapRect(endRect, mVideoRect);
     }
 
-    public void suspend() {
-        mTextureVideoView.suspend();
+    public void seekTo(int msec) {
+        mTextureVideoView.seekTo(msec);
     }
 
     private void zoomAt(float x, float y) {
@@ -179,11 +191,36 @@ public class VideoView extends FrameLayout {
 //            mTextureVideoView.setAnimationMatrix(endMatrix);
 //        }
     }
-//    @Override
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        mViewportRectangle = new RectF(left, top, right, bottom);
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        int renderWidth = mTextureVideoView.getMeasuredWidth();
+        int renderHeight = mTextureVideoView.getMeasuredHeight();
+        int videoWidth = mediaPlayer.getVideoWidth();
+        int videoHeight = mediaPlayer.getVideoHeight();
+        mVideoRect = new RectF(0, 0, videoWidth, videoHeight);
+        if (mListener != null) {
+            mListener.onDurationChange(mTextureVideoView.getDuration());
+        }
+    }
+
+    //    @Override
 //    public boolean onTouchEvent(MotionEvent event) {
 //        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
 //            Log.e("B5aOx2", String.format("[]: event.getX() = %s;\nevent.getY() = %s;\n", event.getX(), event.getY()));
 //        }
 //        return false;
 //    }
+    public interface Listener {
+        void onDurationChange(int duration);
+
+        void onClick();
+
+    }
 }

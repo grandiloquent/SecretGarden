@@ -4,17 +4,24 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import java.io.File;
 
+import psycho.euphoria.v.TimeBar.OnScrubListener;
 
-public class PlayerActivity extends Activity {
+
+public class PlayerActivity extends Activity implements VideoView.Listener, OnScrubListener {
 
     public static final String KEY_VIDEO_FILE = "VideoFile";
     public static final String KEY_VIDEO_TITLE = "VideoTitle";
-
+    private final Handler mHandler = new Handler();
     private VideoView mVideoView;
+    private SimpleTimeBar mTimeBar;
+    private View mWrapper;
 
     public static void launchActivity(Context context, File file, int sort) {
         Intent intent = new Intent(context, PlayerActivity.class);
@@ -31,6 +38,11 @@ public class PlayerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video);
         mVideoView = findViewById(R.id.video_view);
+        mVideoView.setListener(this);
+        mWrapper = findViewById(R.id.wrapper);
+        mWrapper.setVisibility(View.INVISIBLE);
+        mTimeBar = findViewById(R.id.time_bar);
+        mTimeBar.addListener(this);
         Intent intent = getIntent();
         if (intent.hasExtra(KEY_VIDEO_FILE)) {
             mVideoView.playVideo(intent.getStringExtra(KEY_VIDEO_FILE));
@@ -42,6 +54,42 @@ public class PlayerActivity extends Activity {
     protected void onPause() {
         super.onPause();
         mVideoView.suspend();
+    }
+
+    @Override
+    public void onClick() {
+        mWrapper.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onDurationChange(int duration) {
+        Log.e("B5aOx2", String.format("onDurationChange, %s", ""));
+        mTimeBar.setDuration(duration);
+        mTimeBar.setPosition(0);
+    }
+
+    @Override
+    public void onScrubMove(TimeBar timeBar, long position) {
+        mVideoView.seekTo((int) position);
+    }
+
+    @Override
+    public void onScrubStart(TimeBar timeBar, long position) {
+    }
+
+    @Override
+    public void onScrubStop(TimeBar timeBar, long position, boolean canceled) {
+        hideSchedule();
+    }
+
+    private void hideSchedule() {
+        mHandler.removeCallbacks(null);
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mWrapper.setVisibility(View.INVISIBLE);
+            }
+        }, 5000);
     }
 }
 // https://github.com/devlucem/ZoomableVideo
