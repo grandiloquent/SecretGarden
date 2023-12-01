@@ -96,7 +96,7 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     }
 
     private void hideSchedule() {
-        mHandler.removeCallbacks(null);
+        mHandler.removeCallbacksAndMessages(null);
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
