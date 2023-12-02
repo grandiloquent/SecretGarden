@@ -736,6 +736,7 @@ public class TextureVideoView extends TextureView
         }
     }
 
+
     @Override
     public void start() {
         if (isInPlaybackState()) {

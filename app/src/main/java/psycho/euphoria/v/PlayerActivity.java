@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,7 +18,7 @@ import java.io.File;
 import psycho.euphoria.v.TimeBar.OnScrubListener;
 
 
-public class PlayerActivity extends Activity implements VideoView.Listener, OnScrubListener {
+public class PlayerActivity extends Activity implements VideoView.Listener, OnScrubListener, OnTouchListener {
 
     public static final String KEY_VIDEO_FILE = "VideoFile";
     public static final String KEY_VIDEO_TITLE = "VideoTitle";
@@ -25,6 +26,7 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     private VideoView mVideoView;
     private SimpleTimeBar mTimeBar;
     private View mWrapper;
+    private VideoForwardDrawable videoForwardDrawable;
 
     public static void launchActivity(Context context, File file, int sort) {
         Intent intent = new Intent(context, PlayerActivity.class);
@@ -41,14 +43,88 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     }
 
     @Override
+    public boolean onTouch(View view, MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            mHandler.removeCallbacksAndMessages(null);
+            mLastedTime = 0;
+            mIsPressing = true;
+            int x = (int) event.getX();
+            int y = (int) event.getY();
+            if (x > mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+                forward(true);
+            }
+            if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+                forward(false);
+            }
+            if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+                if (mVideoView.isPlaying()) {
+                    mVideoView.pause();
+                } else {
+                    mVideoView.start();
+                }
+            }
+
+        }
+        if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+            mIsPressing = false;
+            hideSchedule();
+
+        }
+        return true;
+    }
+
+    private long mLastedTime;
+    private volatile boolean mIsPressing;
+
+    private void forward(boolean isForward) {
+        new Thread(() -> {
+            mLastedTime = SystemClock.elapsedRealtime();
+            while (mIsPressing) {
+                long now = SystemClock.elapsedRealtime();
+                if (now - mLastedTime > 50) {
+                    runOnUiThread(() -> {
+                        mVideoView.forward(isForward);
+                    });
+                    mLastedTime = now;
+                }
+            }
+        }).start();
+
+
+    }
+
+    private void hideSchedule() {
+        mHandler.removeCallbacksAndMessages(null);
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mWrapper.setVisibility(View.INVISIBLE);
+            }
+        }, 5000);
+    }
+
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video);
         mVideoView = findViewById(R.id.video_view);
         mVideoView.setListener(this);
         mWrapper = findViewById(R.id.wrapper);
+        mWrapper.setOnTouchListener(this);
         mTimeBar = findViewById(R.id.time_bar);
         mTimeBar.addListener(this);
+//        videoForwardDrawable = new VideoForwardDrawable(this, false);
+//        videoForwardDrawable.setDelegate(new VideoForwardDrawable.VideoForwardDrawableDelegate() {
+//            @Override
+//            public void onAnimationEnd() {
+//            }
+//
+//            @Override
+//            public void invalidate() {
+//                mWrapper.invalidate();
+//            }
+//        });
         hideSchedule();
         Intent intent = getIntent();
         if (intent.hasExtra(KEY_VIDEO_FILE)) {
@@ -69,12 +145,6 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     }
 
     @Override
-    public void onVideoClick() {
-        mWrapper.setVisibility(View.VISIBLE);
-        hideSchedule();
-    }
-
-    @Override
     public void onDurationChange(int duration) {
         mTimeBar.setDuration(duration);
         mTimeBar.setPosition(0);
@@ -87,6 +157,7 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
 
     @Override
     public void onScrubStart(TimeBar timeBar, long position) {
+        mHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -95,14 +166,10 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
         hideSchedule();
     }
 
-    private void hideSchedule() {
-        mHandler.removeCallbacksAndMessages(null);
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mWrapper.setVisibility(View.INVISIBLE);
-            }
-        }, 5000);
+    @Override
+    public void onVideoClick() {
+        mWrapper.setVisibility(View.VISIBLE);
+        hideSchedule();
     }
 }
 // https://github.com/devlucem/ZoomableVideo

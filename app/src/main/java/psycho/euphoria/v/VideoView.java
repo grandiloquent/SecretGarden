@@ -105,15 +105,18 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
         };
         mScaleDetector = new ScaleGestureDetector(getContext(), scaleListener);
         mTextureVideoView.setOnPreparedListener(this);
-        mTextureVideoView.setOnTouchListener(this::onTouch);
+        // mTextureVideoView.setOnTouchListener(this::onTouch);
 
     }
 
     public int getDuration() {
         return mTextureVideoView.getDuration();
     }
+    // public boolean onTouch(View view, MotionEvent ev)
 
-    public boolean onTouch(View view, MotionEvent ev) {
+    @Override
+    public boolean onTouchEvent( MotionEvent ev)
+     {
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
             //endAnimation();
             mGestureState = IDLE;
@@ -175,12 +178,33 @@ public class VideoView extends FrameLayout implements OnPreparedListener {
         mTextureVideoView.seekTo(msec);
     }
 
+
+    public void forward(boolean isForward) {
+        if (isForward)
+            mTextureVideoView.seekTo(mTextureVideoView.getCurrentPosition() + 10000);
+        else
+            mTextureVideoView.seekTo(mTextureVideoView.getCurrentPosition() - 10000);
+
+    }
+
+    public void pause() {
+        mTextureVideoView.pause();
+    }
+
+    public void start() {
+        mTextureVideoView.start();
+    }
+
+    public boolean isPlaying() {
+        return mTextureVideoView.isPlaying();
+    }
+
     private void zoomAt(float x, float y) {
         float[] values = new float[9];
         m.getValues(values);
-        if(values[Matrix.MSCALE_X]>=DEFAULT_SCALING){
-            m=new Matrix();
-        }else {
+        if (values[Matrix.MSCALE_X] >= DEFAULT_SCALING) {
+            m = new Matrix();
+        } else {
             m.postScale(DEFAULT_SCALING, DEFAULT_SCALING, x, y);
         }
         mTextureVideoView.setAnimationMatrix(m);
