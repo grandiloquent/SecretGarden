@@ -56,15 +56,19 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
             if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
                 forward(false);
             }
-            if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+            if (x < mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
                 if (mVideoView.isPlaying()) {
                     mVideoView.pause();
                 } else {
                     mVideoView.start();
                 }
             }
+            if (x > mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+                finish();
+            }
 
-        }
+
+            }
         if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
             mIsPressing = false;
             hideSchedule();
@@ -107,6 +111,12 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         setContentView(R.layout.video);
         mVideoView = findViewById(R.id.video_view);
         mVideoView.setListener(this);
