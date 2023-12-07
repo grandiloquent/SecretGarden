@@ -60,7 +60,7 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
                 } else {
                     mVideoView.start();
                 }
-            } else if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+            } else if (x > mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
                 finish();
             }
 
