@@ -52,23 +52,20 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
             int y = (int) event.getY();
             if (x > mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
                 forward(true);
-            }
-            if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+            } else if (x < mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
                 forward(false);
-            }
-            if (x < mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
+            } else if (x < mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
                 if (mVideoView.isPlaying()) {
                     mVideoView.pause();
                 } else {
                     mVideoView.start();
                 }
-            }
-            if (x > mWrapper.getMeasuredWidth() / 2 && y > mWrapper.getMeasuredHeight() / 2) {
+            } else if (x < mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
                 finish();
             }
 
 
-            }
+        }
         if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
             mIsPressing = false;
             hideSchedule();
