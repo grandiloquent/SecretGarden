@@ -27,6 +27,8 @@ import java.util.Set;
 
 import psycho.euphoria.v.Shared.Listener;
 
+import static psycho.euphoria.v.Shared.requestStoragePremissions;
+
 public class VideoListActivity extends Activity {
     private static final String KEY_FAVORITES_LIST = "key_favorites_list";
     private GridView mGridView;
@@ -79,7 +81,12 @@ public class VideoListActivity extends Activity {
 
     private void loadFolder(String filter, int sort) {
         File dir = new File(mDirectory);
-        File[] videos = dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".mp4") && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
+        File[] videos = dir.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(".mp4")
+                || pathname.getName().endsWith(".MP4")
+                || pathname.getName().endsWith(".MOV")
+                || pathname.getName().endsWith(".mov")
+        )
+                && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
         if (videos != null) {
             for (File f : videos) {
                 f.renameTo(new File(f.getParentFile(), Shared.substringBefore(f.getName(), ".mp4") + ".v"));
@@ -143,6 +150,7 @@ public class VideoListActivity extends Activity {
         super.onCreate(savedInstanceState);
         mSort = PreferenceManager.getDefaultSharedPreferences(this)
                 .getInt(KEY_SORT, 3);
+        requestStoragePremissions(this, true);
         setContentView(R.layout.video_list_activity);
         mGridView = findViewById(R.id.recycler_view);
         mGridView.setNumColumns(2);
