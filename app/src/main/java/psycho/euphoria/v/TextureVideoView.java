@@ -487,6 +487,7 @@ public class TextureVideoView extends TextureView
             mMediaPlayer.setSurface(mSurface);
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setScreenOnWhilePlaying(true);
+            mMediaPlayer.setLooping(true);
             mMediaPlayer.prepareAsync();
             // we don't set the target state here either, but preserve the
             // target state that was there before.
