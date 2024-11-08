@@ -484,7 +484,6 @@ public class MainActivity extends Activity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 mSearch = query;
-                Log.e("B5aOx2", String.format("onQueryTextSubmit, %s %s %s", mSearch,mSort,mVideoType));
                 mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
                 searchView.clearFocus();
                 // searchView.setIconified(true);
@@ -539,7 +538,7 @@ public class MainActivity extends Activity {
                 } else if (position == 6) {
                     new Thread(() -> {
                         // 500
-                        for (int i = 0; i < 200; i++) {
+                        for (int i = 0; i <100; i++) {
                             try {
                                 List<Video> videos = Utils.scrap52Ck(i);
                                 mVideoDatabase.insertVideos(videos);

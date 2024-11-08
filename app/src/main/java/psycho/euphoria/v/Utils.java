@@ -251,7 +251,7 @@ public class Utils {
     }
 
     private static String getRealAddressInternal() throws Exception {
-        HttpsURLConnection u = (HttpsURLConnection) new URL("https://user.seven301.xyz:8899/?u=http://52ck.cc/&p=/")
+        HttpsURLConnection u = (HttpsURLConnection) new URL("https://666937.xyz:8899/?u=http://52ck.cc/&p=/")
                 .openConnection();
         u.setInstanceFollowRedirects(false);
         if (u.getResponseCode() == 302) {
@@ -399,9 +399,9 @@ public class Utils {
     }
 
     public static List<Video> scrap91Porn(int page) throws Exception {
-        String home = "http://91porn.com/index.php";
+        String home = "https://91porn.com/index.php";
         if (page != 0) {
-            home = "http://91porn.com/v.php?page=" + page;
+            home = "https://91porn.com/v.php?page=" + page;
         }
         HttpURLConnection u = (HttpURLConnection) new URL(home).openConnection();
         u.addRequestProperty("Accept",

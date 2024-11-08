@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;

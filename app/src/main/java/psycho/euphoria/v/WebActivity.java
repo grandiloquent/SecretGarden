@@ -26,11 +26,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import psycho.euphoria.v.tasks.DownloaderService;
 
@@ -121,7 +123,6 @@ public class WebActivity extends Activity {
         if (uri != null)
             mWebView.loadUrl(uri);
         // Native.getUri()
-
     }
 
     /*public static Pair<String, String> process91Porn(String videoAddress) {
@@ -169,8 +170,7 @@ public class WebActivity extends Activity {
 //        }
         String title = null;
         try {
-            Log.e("B5aOx2", String.format("process91Porn, %s", videoAddress));
-            HttpURLConnection c = (HttpURLConnection) new URL(videoAddress).openConnection(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809)));
+            HttpURLConnection c = (HttpURLConnection) new URL(videoAddress.replace("http://", "https://")).openConnection(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809)));
             c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             c.addRequestProperty("Accept-Encoding", "gzip, deflate");
             c.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
@@ -179,7 +179,7 @@ public class WebActivity extends Activity {
             c.addRequestProperty("Proxy-Connection", "keep-alive");
             c.addRequestProperty("Upgrade-Insecure-Requests", "1");
             c.addRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Mobile Safari/537.36");  // Mozilla/5.0 (Linux; Android 11; Redmi K30 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/94.0.4606.71 Mobile
-            //c.addRequestProperty("Cookie", "cf_clearance=yjq6tftr.tc47_P_FVKEgjrU5Zfs2BOpiJtma7RZcCM-1658348428-0-250; CLIPSHARE=ue9h0lmrliv0co0ee4o2n5mgfm; __utmc=50351329; __utmz=50351329.1658348430.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); views_t=393; __utma=50351329.454003299.1658348430.1658562840.1658564812.6; __utmb=50351329.0.10.1658564812");
+            //c.addRequestProperty("Cookie", "CLIPSHARE=go7ituvaubvo9mr85sls0i13hc; cf_clearance=0toFCitHSJbTZ.51xaqL5fgtTDtdhx4O41lJIxg_by0-1730997079-1.2.1.1-0t6tdfXd5Nr5o_gkeQwIHFOddvk7IvYs5Fl3gvA9jKOGfuj6S65MBncppbTrkYOgqIlMDWVjBl7MgRq1W5T8Yex3svpKjvcKCYQqhW2PQ0UOYScMHUTsUwMtopm.rWd54StoFz6SzaCG3nYB0dIXRVtZOkCJUPSeq.mEWCpS4IwlA2.C008XtZRR5zSDuLS66Esg8LAlhlejli2KCpiDrSiMF60LnG78xtncQZlebaqom1Xpqd36kaPeQ4jQOBWSms2hD47jwYO9XbHqUbe2_McTVad.ETN5G.jvfQGc7oRhhCWwhgvo2SPnzMXyLhG5b_RZ3pnpo7S0qNkrfsbcf5XlAiTZi6gGo_P8eQ9r5ikN3lVxEXj8Yzjf1hq5w39V_3qZoJXna.lty.kASCd9ZQ");
             c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
             //c.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
             c.setInstanceFollowRedirects(false);
@@ -194,19 +194,18 @@ public class WebActivity extends Activity {
                 return null;
             }
             response = Shared.readString(c);
-            Log.e("B5aOx2", String.format("process91Porn, %s", response));
             if (response == null) {
                 return null;
             }
             title = Shared.substring(response, "<title>", "Chinese homemade video");
-            response = Shared.substring(response, "strencode2(\"", "\")");
-            response = Uri.decode(response);
+            response = Shared.substring(response, "encryptedUrl: '", "'");
+            response = get91PornVideo(response);
         } catch (Exception e) {
             Log.e("B5aOx2", String.format("process91Porn, %s>>>>>>>>>>>>>>>", e));
         }
         //title
         if (title == null || response == null) return null;
-        return Pair.create(title.trim(), Shared.substring(response, "src='", "'"));
+        return Pair.create(title.trim(),response);
 //        JSONObject jsonObject = null;
 //        try {
 //            jsonObject = new JSONObject(response);
@@ -217,6 +216,31 @@ public class WebActivity extends Activity {
 //            Log.e("B5aOx2", String.format("process91Porn, %s", ignored));
 //        }
         //return null;
+    }
+
+    public static String get91PornVideo(String encryptedUrl) {
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL("https://91porn.com/get_decrypted_video.php").openConnection(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809)));
+            c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+            c.addRequestProperty("Accept-Encoding", "gzip, deflate");
+            c.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+            c.addRequestProperty("Cache-Control", "max-age=0");
+            c.addRequestProperty("Host", "91porn.com");
+            c.addRequestProperty("Proxy-Connection", "keep-alive");
+            c.addRequestProperty("Upgrade-Insecure-Requests", "1");
+            c.addRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Mobile Safari/537.36");  // Mozilla/5.0 (Linux; Android 11; Redmi K30 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/94.0.4606.71 Mobile
+            //c.addRequestProperty("Cookie", "CLIPSHARE=go7ituvaubvo9mr85sls0i13hc; cf_clearance=0toFCitHSJbTZ.51xaqL5fgtTDtdhx4O41lJIxg_by0-1730997079-1.2.1.1-0t6tdfXd5Nr5o_gkeQwIHFOddvk7IvYs5Fl3gvA9jKOGfuj6S65MBncppbTrkYOgqIlMDWVjBl7MgRq1W5T8Yex3svpKjvcKCYQqhW2PQ0UOYScMHUTsUwMtopm.rWd54StoFz6SzaCG3nYB0dIXRVtZOkCJUPSeq.mEWCpS4IwlA2.C008XtZRR5zSDuLS66Esg8LAlhlejli2KCpiDrSiMF60LnG78xtncQZlebaqom1Xpqd36kaPeQ4jQOBWSms2hD47jwYO9XbHqUbe2_McTVad.ETN5G.jvfQGc7oRhhCWwhgvo2SPnzMXyLhG5b_RZ3pnpo7S0qNkrfsbcf5XlAiTZi6gGo_P8eQ9r5ikN3lVxEXj8Yzjf1hq5w39V_3qZoJXna.lty.kASCd9ZQ");
+            c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
+            c.setRequestMethod("POST");
+            OutputStream os = c.getOutputStream();
+            os.write(String.format("{\"encryptedUrl\":\"%s\"}", encryptedUrl).getBytes(StandardCharsets.UTF_8));
+            String response = Shared.readString(c);
+            JSONObject jsonObject = new JSONObject(response);
+            return jsonObject.getString("videoUrl");
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     public static Pair<String, String> processXVideos(String videoAddress) {

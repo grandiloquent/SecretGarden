@@ -10,7 +10,7 @@ import psycho.euphoria.v.VideoDatabase.Video;
 public class Helpers {
     public static void tryGetCookie(Context context, Video video) {
         Intent v = new Intent(context, TestActivity.class);
-        v.putExtra("url", Utils.getRealAddress() + video.Url);
+        v.putExtra("url",video.Url.startsWith("/")?Utils.getRealAddress() + video.Url:"https://91porn.com/");
         context.startActivity(v);
     }
 
