@@ -143,6 +143,7 @@ public class NineOneHelper {
             }
             String needle = "document.write(strencode2(\"";
             if (response.contains(needle)) {
+                title = Shared.substring(response, "<title>", "Chinese homemade video");
                 response = Shared.substring(response, needle, "\"");
                 response = Uri.decode(response);
                 response = Shared.substring(response, "<source src='", "'");

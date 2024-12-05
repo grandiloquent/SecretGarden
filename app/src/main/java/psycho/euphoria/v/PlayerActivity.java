@@ -62,6 +62,8 @@ public class PlayerActivity extends Activity implements VideoView.Listener, OnSc
                 }
             } else if (x > mWrapper.getMeasuredWidth() / 2 && y < mWrapper.getMeasuredHeight() / 2) {
                 finish();
+                Intent intent=new Intent(this, MainActivity.class);
+                startActivity(intent);
             }
 
 

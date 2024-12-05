@@ -35,7 +35,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
 import android.webkit.WebView;
+import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -363,34 +365,45 @@ public class MainActivity extends Activity {
         // e.printStackTrace();
         // }
         // }
-        mGridView.setOnItemClickListener((parent, view, position, id) -> new Thread(() -> {
+        mGridView.setOnItemLongClickListener(new OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                new Thread(() -> {
+                    Video video = mVideosAdapter.getItem(position);
+                    String source = null;
+                    Video old = mVideoDatabase.queryVideoSource(video.Id);
+                    if (TextUtils.isEmpty(old.Source)) {
+                        Pair<String, String> videos = null;
+                        if (video.Url.startsWith("/")) {
+                            videos = WebActivity.processCk(view.getContext(), Utils.getRealAddress() + video.Url);
+                        } else {
+                            videos = process91Porn(view.getContext(), video.Url);
+                            ;
+                        }
+                        if (videos != null) {
+                            source = videos.second;
+                        }
+                        if (!TextUtils.isEmpty(source)) {
+                            mVideoDatabase.updateVideoSource(video.Id, source);
+                        }
+                    } else {
+                        source = old.Source;
+                    }
+                    if (!TextUtils.isEmpty(source)) {
+                        mVideoDatabase.updateViews(video.Id);
+                        PlayerActivity.launchActivity(view.getContext(), source, video.Title);
+                    } else {
+                        Helpers.tryGetCookie(MainActivity.this, video);
+                    }
+                }).start();
+                return true;
+            }
+        });
+        mGridView.setOnItemClickListener((parent, view, position, id) -> {
             Video video = mVideosAdapter.getItem(position);
-            String source = null;
-            Video old = mVideoDatabase.queryVideoSource(video.Id);
-            if (TextUtils.isEmpty(old.Source)) {
-                Pair<String, String> videos = null;
-                if (video.Url.startsWith("/")) {
-                    videos = WebActivity.processCk(view.getContext(), Utils.getRealAddress() + video.Url);
-                } else {
-                    videos = process91Porn(view.getContext(), video.Url);
-                    ;
-                }
-                if (videos != null) {
-                    source = videos.second;
-                }
-                if (!TextUtils.isEmpty(source)) {
-                    mVideoDatabase.updateVideoSource(video.Id, source);
-                }
-            } else {
-                source = old.Source;
-            }
-            if (!TextUtils.isEmpty(source)) {
-                mVideoDatabase.updateViews(video.Id);
-                PlayerActivity.launchActivity(view.getContext(), source, video.Title);
-            } else {
-                Helpers.tryGetCookie(this, video);
-            }
-        }).start());
+            mVideoDatabase.updateVideoType(video.Id, 6);
+            mVideosAdapter.update(mVideoDatabase.queryVideos(mSearch, mSort, mVideoType));
+        });
 //        new Thread(() -> {
 //            mVideoDatabase.updateThumbnails();
 //            MainActivity.this.runOnUiThread(new Runnable() {
