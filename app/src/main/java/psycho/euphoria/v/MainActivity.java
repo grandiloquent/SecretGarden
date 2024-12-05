@@ -63,6 +63,7 @@ import psycho.euphoria.v.tasks.DownloaderService;
 
 import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 import static android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM;
+import static psycho.euphoria.v.NineOneHelper.process91Porn;
 import static psycho.euphoria.v.Shared.closeQuietly;
 import static psycho.euphoria.v.Shared.requestStoragePremissions;
 
@@ -77,6 +78,7 @@ public class MainActivity extends Activity {
     private VideosAdapter mVideosAdapter;
     private String mSearch;
     private int mSort = 0;
+    int mStart = 0;
 
     public void browserEmbededWeb(String uri) {
         Intent intent = new Intent(MainActivity.this, TestActivity.class);
@@ -127,8 +129,9 @@ public class MainActivity extends Activity {
             }).start();
             return true;
         }
-        int index = mVideosAdapter.search(query);
+        int index = mVideosAdapter.search(query, mStart);
         if (index != -1) {
+            mStart = index + 1;
             mGridView.post(new Runnable() {
                 @Override
                 public void run() {
@@ -139,6 +142,7 @@ public class MainActivity extends Activity {
         }
         return true;
     }
+
 
     public void showProgress(String message) {
         runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
@@ -230,6 +234,10 @@ public class MainActivity extends Activity {
                 .setView(editText)
                 .setPositiveButton("确定", (dialog1, which) -> {
                     dialog1.dismiss();
+                    mVideoDatabase.deleteVideos();
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+                    final String cookie = sharedPreferences.getString(SettingsFragment.KEY_91_COOKIE, null);
+                    final String userAgent = sharedPreferences.getString(SettingsFragment.KEY_USER_AGENT, null);
                     new Thread(() -> {
                         int start = 0;
                         int end = 3;
@@ -243,9 +251,9 @@ public class MainActivity extends Activity {
                         }
                         for (int i = start; i < end; i++) {
                             try {
-                                List<Video> videos = Utils.scrap91Porn(i);
+                                List<Video> videos = NineOneHelper.scrap91Porn(i, cookie, userAgent);
                                 mVideoDatabase.insertVideos(videos);
-                                showProgress(String.format("已成功抓取第 %s 页", i + 1));
+                                showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", i + 1, videos.size()));
                             } catch (Exception e) {
                                 showProgress(String.format("抓取页面错误：%s", e.getMessage()));
                             }
@@ -364,7 +372,7 @@ public class MainActivity extends Activity {
                 if (video.Url.startsWith("/")) {
                     videos = WebActivity.processCk(view.getContext(), Utils.getRealAddress() + video.Url);
                 } else {
-                    videos = WebActivity.process91Porn(view.getContext(), video.Url);
+                    videos = process91Porn(view.getContext(), video.Url);
                     ;
                 }
                 if (videos != null) {
@@ -407,7 +415,7 @@ public class MainActivity extends Activity {
             new Thread(() -> {
                 if (video.Source == null) {
                     // Attempt to resolve the address of the video file
-                    Pair<String, String> videos = WebActivity.process91Porn(this, video.Url);
+                    Pair<String, String> videos = process91Porn(this, video.Url);
                     if (videos != null && videos.second != null) {
                         mVideoDatabase.updateVideoSource(video.Id, videos.second);
                         video.Source = videos.second;
@@ -538,7 +546,7 @@ public class MainActivity extends Activity {
                 } else if (position == 6) {
                     new Thread(() -> {
                         // 500
-                        for (int i = 0; i <100; i++) {
+                        for (int i = 0; i < 100; i++) {
                             try {
                                 List<Video> videos = Utils.scrap52Ck(i);
                                 mVideoDatabase.insertVideos(videos);
@@ -563,6 +571,16 @@ public class MainActivity extends Activity {
 //                mSort = 0;
 //            }
             Process.killProcess(Process.myPid());
+//            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+//            final String cookie = sharedPreferences.getString(SettingsFragment.KEY_91_COOKIE, null);
+//            final String userAgent = sharedPreferences.getString(SettingsFragment.KEY_USER_AGENT, null);
+//            new Thread(()->{
+//                try {
+//                    NineOneHelper.scrap91Porn(0, cookie, userAgent);
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }).start();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -573,13 +591,11 @@ public class MainActivity extends Activity {
         private ExecutorService mExecutorService = Executors.newFixedThreadPool(3);
         private Handler mHandler = new Handler();
 
-        public int search(String pattern) {
-            int i = 0;
-            for (Video video : mVideos) {
-                if (video.Title.contains(pattern)) {
+        public int search(String pattern, int start) {
+            for (int i = start; i < mVideos.size(); i++) {
+                if (mVideos.get(i).Title.contains(pattern)) {
                     return i;
                 }
-                i++;
             }
             return -1;
         }

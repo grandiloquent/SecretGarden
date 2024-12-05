@@ -25,9 +25,11 @@ import org.jsoup.select.Elements;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -398,67 +400,6 @@ public class Utils {
         return vs;
     }
 
-    public static List<Video> scrap91Porn(int page) throws Exception {
-        String home = "https://91porn.com/index.php";
-        if (page != 0) {
-            home = "https://91porn.com/v.php?page=" + page;
-        }
-        HttpURLConnection u = (HttpURLConnection) new URL(home).openConnection();
-        u.addRequestProperty("Accept",
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-        u.addRequestProperty("Accept-Encoding", "gzip, deflate");
-        u.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
-        u.addRequestProperty("Cache-Control", "no-cache");
-        u.addRequestProperty("Cookie",
-                "__utma=50351329.307729816.1658566123.1658566123.1658566123.1; __utmz=50351329.1658566123.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); CLIPSHARE=4vdjcomctii5oojl9roe566umu");
-        u.addRequestProperty("Host", "91porn.com");
-        u.addRequestProperty("Pragma", "no-cache");
-        u.addRequestProperty("Proxy-Connection", "keep-alive");
-        u.addRequestProperty("Upgrade-Insecure-Requests", "1");
-        u.addRequestProperty("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
-        if (u.getResponseCode() != 200) {
-            throw new IllegalStateException(Integer.toString(u.getResponseCode()));
-        }
-        String line;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(u.getInputStream())));
-        StringBuilder stringBuilder = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line).append('\n');
-        }
-        Document document = Jsoup.parse(stringBuilder.toString());
-        Elements videos = document.select(".videos-text-align");
-        ZoneId zoneId = ZoneId.systemDefault();
-        Pattern pattern = Pattern.compile("\\s+?(\\d+)\\s+?小*?([时天年])\\s+?前");
-        List<Video> vs = new ArrayList<>();
-        for (Element v : videos) {
-            Video video = new Video();
-            video.Title = v.select(".thumb-overlay + span").text();
-            video.Thumbnail = v.select(".thumb-overlay img").attr("src");
-            try {
-                video.Duration = toSeconds(v.select(".thumb-overlay .duration").text());
-            } catch (Exception e) {
-                video.Duration = 0;
-            }
-            LocalDateTime localDate = LocalDateTime.now();
-            Matcher matcher = pattern.matcher(v.html());
-            if (matcher.find()) {
-                if (matcher.group(2).equals("时")) {
-                    localDate = localDate.minusHours(Integer.parseInt(matcher.group(1)));
-                } else if (matcher.group(2).equals("天")) {
-                    localDate = localDate.minusDays(Integer.parseInt(matcher.group(1)));
-                } else if (matcher.group(2).equals("年")) {
-                    localDate = localDate.minusYears(Integer.parseInt(matcher.group(1)));
-                }
-            }
-            video.CreateAt = localDate.atZone(zoneId).toEpochSecond();
-            String href = v.select("a").attr("href");
-            video.Url = Shared.substringBefore(href, "?") + "?viewkey=" + Uri.parse(href).getQueryParameter("viewkey");
-            video.VideoType = 1;
-            vs.add(video);
-        }
-        return vs;
-    }
 
     public static void setSearchViewStyle(SearchView searchView) {
         LinearLayout linearLayout = ((LinearLayout) searchView.getChildAt(0));
@@ -504,5 +445,19 @@ public class Utils {
             j--;
         }
         return total;
+    }
+
+    public static void saveLog(int id, String title, String content) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL("http://0.0.0.0:8500/note").openConnection();
+        c.setRequestMethod("POST");
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", id);
+        jsonObject.put("title", title);
+        jsonObject.put("content", content);
+        OutputStream os = c.getOutputStream();
+        os.write(jsonObject.toString().getBytes(StandardCharsets.UTF_8));
+        os.close();
+        String response = Shared.readString(c);
+
     }
 }

@@ -26,6 +26,7 @@ import psycho.euphoria.v.R;
 import psycho.euphoria.v.Shared;
 import psycho.euphoria.v.WebActivity;
 
+import static psycho.euphoria.v.NineOneHelper.process91Porn;
 import static psycho.euphoria.v.Shared.USER_AGENT;
 import static psycho.euphoria.v.tasks.DownloadUtils.background;
 import static psycho.euphoria.v.tasks.DownloadUtils.createNotificationChannel;
@@ -148,7 +149,7 @@ public class DownloaderService extends Service implements RequestListener {
     private Pair<String, String> getVideoInformation(String videoAddress) {
         Pair<String, String> results;
         if (videoAddress.contains("91porn.com")) {
-            results = WebActivity.process91Porn(this, videoAddress);
+            results = process91Porn(this, videoAddress);
 
         } else if (videoAddress.contains("xvideos.com")) {
             results = WebActivity.processXVideos(videoAddress);
@@ -214,7 +215,7 @@ public class DownloaderService extends Service implements RequestListener {
         }
         new Thread(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            Pair<String, String> info = Pair.create(intent.getStringExtra(EXTRA_VIDEO_TITLE),videoAddress);//getVideoInformation(videoAddress);
+            Pair<String, String> info = Pair.create(intent.getStringExtra(EXTRA_VIDEO_TITLE), videoAddress);//getVideoInformation(videoAddress);
             if (info != null && info.second != null) {
                 if (info.second.contains(".mp4")) {
                     mHandler.post(() -> Shared.downloadFile(DownloaderService.this,

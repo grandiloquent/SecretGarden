@@ -94,6 +94,9 @@ public class VideoDatabase extends SQLiteOpenHelper {
         cursor.close();
     }
 
+    public void deleteVideos(){
+        getWritableDatabase().delete("videos","ifnull(title,'')=''",null);
+    }
     public List<Video> queryVideos(String search, int sortBy, int videoType) {
         //getWritableDatabase().execSQL("ALTER TABLE videos ADD views int;");
         Cursor cursor;

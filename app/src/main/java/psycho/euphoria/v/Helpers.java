@@ -7,10 +7,12 @@ import android.util.Pair;
 
 import psycho.euphoria.v.VideoDatabase.Video;
 
+import static psycho.euphoria.v.NineOneHelper.process91Porn;
+
 public class Helpers {
     public static void tryGetCookie(Context context, Video video) {
         Intent v = new Intent(context, TestActivity.class);
-        v.putExtra("url",video.Url.startsWith("/")?Utils.getRealAddress() + video.Url:"https://91porn.com/");
+        v.putExtra("url", video.Url.startsWith("/") ? Utils.getRealAddress() + video.Url : video.Url);
         context.startActivity(v);
     }
 
@@ -19,7 +21,7 @@ public class Helpers {
         if (video.Url.startsWith("/")) {
             videos = WebActivity.processCk(context, Utils.getRealAddress() + video.Url);
         } else {
-            videos = WebActivity.process91Porn(context, video.Url);
+            videos = process91Porn(context, video.Url);
         }
         if (videos != null && !TextUtils.isEmpty(videos.second)) {
             videoDatabase.updateVideoSource(video.Id, videos.second);
