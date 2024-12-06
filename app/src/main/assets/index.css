@@ -726,3 +726,157 @@ button {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
+.dialog-container {
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    z-index: 4;
+    margin: 0 40px;
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.dialog {
+
+    position: relative;
+    z-index: 2;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    max-height: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-size: 1.3rem;
+    color: #0f0f0f;
+    background-color: #fff;
+    border: none;
+    min-width: 250px;
+    max-width: 356px;
+    box-shadow: 0 0 24px 12px rgba(0, 0, 0, 0.25);
+    padding: 0;
+    border-radius: 24px;
+}
+
+.dialog-layout {
+
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    background-color: #fff;
+    min-width: min(320px, 100vw - 96px);
+    max-width: min(400px, 100vw - 96px);
+    max-height: calc(100vh - 96px);
+}
+
+.dialog-header {
+
+    padding: 24px 24px 8px;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    flex-direction: row;
+    -webkit-box-align: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.dialog-layout-title {
+    color: #0f0f0f;
+    -webkit-box-flex: 1;
+    flex: 1;
+    font-family: "Roboto", "Arial", sans-serif;
+    font-size: 2rem;
+    line-height: 2.8rem;
+    font-weight: 700;
+    overflow: hidden;
+    max-height: 5.6rem;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
+.dialog-layout-container {
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 24px;
+}
+
+.dialog-layout-content {
+
+    color: #0f0f0f;
+    overflow-y: auto;
+}
+
+.dialog-layout-content-inner {
+
+    overflow: visible;
+    padding: 0 24px;
+}
+
+.dialog-layout-footer {
+    padding-top: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    flex-flow: row wrap-reverse;
+    flex-shrink: 0;
+    margin: -8px 0 0 -8px;
+}
+
+.dialog-flex-button {
+
+    -webkit-box-flex: 1;
+    flex: 1;
+    padding: 0 15px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    padding: 8px 0 0 8px;
+    height: 36px;
+    font-size: 14px;
+    line-height: 36px;
+    color: #0f0f0f;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.dialog-flex-button.grey {
+    color: #909090;
+}
+
+.dialog-scrim {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+.virtual {
+    position: absolute;
+    height: 200px;
+    top: -200px;
+    width: 100%;
+    pointer-event:none;
+  }

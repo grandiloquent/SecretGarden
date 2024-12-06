@@ -12,58 +12,22 @@ bottomSheetScrim.addEventListener('click', evt => {
 //     bottomSheetContainer.style.display = 'block';
 
 // })
-function formatDuration(ms) {
-    if (isNaN(ms)) return '0:00';
-    if (ms < 0) ms = -ms;
-    const time = {
-        hour: Math.floor(ms / 3600) % 24,
-        minute: Math.floor(ms / 60) % 60,
-        second: Math.floor(ms) % 60,
-    };
-    return Object.entries(time)
-        .filter((val, index) => index || val[1])
-        .map(val => (val[1] + '').padStart(2, '0'))
-        .join(':');
-}
-const en_US = [
-    "刚刚", "秒前",
-    "1 分钟前", "分钟前",
-    "1 小时前", "小时前",
-    "1 天前", "天前",
-    "1 周前", "周前",
-    "1 个月前", "个月前",
-    "1 年前", "年前"
-]
-const SECONDS_IN_TIME = [
-    1,         // 1 second
-    60,        // 1 minute
-    3600,      // 1 hour
-    86400,     // 1 day
-    604800,    // 1 week
-    2419200,   // 1 month
-    29030400   // 1 year
-];
-function timeago(timestamp) {
-    let now = Math.floor(new Date / 1000);
-    let diff = (now - timestamp) || 1; // prevent undefined val when diff == 0
-    for (let i = 6; i >= 0; i--) {
-        if (diff >= SECONDS_IN_TIME[i]) {
-            let time_elapsed = Math.floor(diff / SECONDS_IN_TIME[i]);
-            let adverbs = en_US;
-            let sentence = adverbs.map((el, idx) => idx % 2 == 0 ? el : time_elapsed + " " + el);
-            return time_elapsed >= 2 ? sentence[i * 2 + 1] : sentence[i * 2];
-        }
 
-    }
 
-}
 const videoWithContextRenderer = document.querySelector('.video-with-context-renderer');
+let mLimit = 20;
+let mOffset = 0;
+let mSearch=null;
 
-function render(search, sort, videoType) {
-    videoWithContextRenderer.innerHTML = '';
+function render() {
+
     if (typeof NativeAndroid !== 'undefined') {
-
-        const videos = JSON.parse(NativeAndroid.loadVideos(search, sort, videoType));
+        let uri = "";
+        const videos = JSON.parse(NativeAndroid.loadVideos(mSearch,mSort,mVideoType, mLimit, mOffset));
+        // if (!/91porn/.test(videos[0].thumbnail)) {
+        //     uri = NativeAndroid.getRealAddress();
+        // }
+        mOffset += mLimit;
         const buffer = [];
         videos.forEach(video => {
             buffer.push(`<div class="media-item" data-id="${video.id}">
@@ -71,7 +35,7 @@ function render(search, sort, videoType) {
                         <div class="video-thumbnail-container-large">
                             <div class="video-thumbnail-bg">
                             </div>
-                            <img class="video-thumbnail-img lazy" data-src="${video.thumbnail}">
+                            <img class="video-thumbnail-img lazy" src="${uri ? video.thumbnail.replace(/.+(?=\/images)/, uri) : video.thumbnail}">
                         </div>
                         <div class="time-display">
                             <div class="time-display-wrapper">
@@ -94,7 +58,7 @@ function render(search, sort, videoType) {
                         <div class="media-item-info">
                             <div class="media-item-metadata">
                                 <a>
-                                    <h3 class="media-item-headline">${video.title}</h3>
+                                    <h3 class="media-item-headline" data-id="${video.id}">${video.title}</h3>
                                     <div class="badge-and-byline-renderer">
                                         <span class="badge-and-byline-item-byline">
                                           ${video.views} 次
@@ -106,7 +70,7 @@ function render(search, sort, videoType) {
                                         </div>
                                 </a>
                             </div>
-                            <div class="bottom-sheet-renderer">
+                            <div class="bottom-sheet-renderer" data-id="${video.id}">
                                 <div class="button-shape">
                                     <button class="spec-button">
     
@@ -127,26 +91,46 @@ function render(search, sort, videoType) {
                     </div>
                 </div>`);
         })
-        videoWithContextRenderer.insertAdjacentHTML('afterbegin', buffer.join(''))
+        videoWithContextRenderer.insertAdjacentHTML('beforeend', buffer.join(''))
     }
-    var lazyLoadInstance = new LazyLoad({
-        // Your custom settings go here
-    });
-    document.querySelectorAll('.media-item')
+    // var lazyLoadInstance = new LazyLoad({
+    // });
+    document.querySelectorAll('.media-item:not([binded])')
         .forEach(element => {
+            element.setAttribute('binded', 'true');
             element.addEventListener('click', evt => {
                 evt.stopPropagation();
                 if (NativeAndroid != undefined)
                     NativeAndroid.play(parseInt(element.dataset.id));
             })
         });
+    document.querySelectorAll('.bottom-sheet-renderer:not([binded])')
+        .forEach(element => {
+            element.setAttribute('binded', 'true');
+            element.addEventListener('click', evt => {
+                evt.stopPropagation();
+                showActions(parseInt(element.dataset.id))
+            })
+        });
+        document.querySelectorAll('.media-item-headline:not([binded])')
+        .forEach(element => {
+            element.setAttribute('binded', 'true');
+            element.addEventListener('click', evt => {
+                evt.stopPropagation();
+                videoWithContextRenderer.innerHTML = '';
+                mOffset = 0;
+                render()
+                NativeAndroid.moveVideo(parseInt(element.dataset.id))
+            })
+        });  
+        
 }
 
 
 let mSort = (localStorage.getItem('sort') && parseInt(localStorage.getItem('sort'))) || 0;
 let mVideoType = (localStorage.getItem('videoType') && parseInt(localStorage.getItem('videoType'))) || 1;
 
-render(null, mSort, mVideoType);
+render();
 
 
 
@@ -156,17 +140,19 @@ render(null, mSort, mVideoType);
 const bottomSheetContent = document.querySelector('.bottom-sheet-content');
 const bottomSheetLayoutContentWrapper = document.querySelector('.bottom-sheet-layout-content-wrapper');
 
-const videoList = document.querySelector('.video-list');
-videoList.addEventListener('click', evt => {
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    bottomSheetContent.innerHTML = ["91",
+
+
+
+
+function showActions(id) {
+    bottomSheetContent.innerHTML = [
+        "91",
         "57",
         "收藏",
         "屏蔽",
         "露脸",
         "其他",
-        "视频"].map((x, k) => {
+        "刷新"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -183,14 +169,10 @@ videoList.addEventListener('click', evt => {
             element.addEventListener('click', evt => {
                 evt.stopPropagation();
                 bottomSheetContainer.style.display = 'none';
-                mVideoType = parseInt(element.dataset.id)
-                localStorage.setItem('videoType', element.dataset.id)
-                render(null, mSort, mVideoType)
+                NativeAndroid.refreshVideo(id);
             })
         });
-})
-
-
+}
 
 
 
@@ -203,7 +185,10 @@ videoList.addEventListener('click', evt => {
 const searchQuery = document.querySelector('.search-query');
 searchQuery.addEventListener('keydown', evt => {
     if (evt.keyCode === 13) {
-        render(searchQuery.value, mSort, mVideoType)
+        videoWithContextRenderer.innerHTML = '';
+        mOffset = 0;
+        mSearch=searchQuery.value;
+        render()
     }
 })
 
@@ -219,6 +204,120 @@ const searchButton = document.querySelector('.search-button');
 searchButton.addEventListener('click', evt => {
     evt.preventDefault();
     evt.stopImmediatePropagation();
-    render(searchQuery.value, mSort, mVideoType)
+    videoWithContextRenderer.innerHTML = '';
+    mOffset = 0;
+    mSearch=searchQuery.value;
+    render()
 })
+
+function showDialog(mode) {
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="dialog-container">
+        <div class="dialog">
+       
+            <div class="dialog-layout">
+                <div class="dialog-header">
+                    <div class="dialog-layout-title">
+                        对话框
+                    </div>
+                </div>
+                <div class="dialog-layout-container">
+                    <div class="dialog-layout-content">
+                        <div class="dialog-layout-content-inner">
+                            <div style="display: flex;flex-direction: column;gap: 8px;font-size: 14px;">
+                                <input class="dialog-input">
+                                <input class="dialog-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dialog-layout-footer">
+                        <div class="dialog-flex-button">
+                            取消
+                        </div>
+                        <div class="dialog-flex-button grey">
+                            确定
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         
+    <div class="dialog-scrim">
+
+    </div>
+    </div>`;
+    document.body.appendChild(div);
+    div.querySelector('.dialog-flex-button:first-child')
+        .addEventListener('click', evt => {
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            div.remove();
+        });
+    const dialogInput1 = document.querySelector('.dialog-input:first-child');
+    const dialogInput2 = document.querySelector('.dialog-input:last-child');
+
+
+    div.querySelector('.dialog-flex-button:last-child')
+        .addEventListener('click', evt => {
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            div.remove();
+            const start = (dialogInput1.value && parseInt(dialogInput1.value)) || 0;
+            const end = (dialogInput2.value && parseInt(dialogInput2.value)) || 3;
+            if (typeof NativeAndroid !== 'undefined') {
+                NativeAndroid.fetchVideos(mode, start, end);
+            }
+
+        });
+
+    const dialogScrim = div.querySelector('.dialog-scrim');
+    dialogScrim.addEventListener('click', evt => {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        div.remove();
+    })
+
+}
+
+
+
+
+
+
+const videoOptions = document.querySelector('.video-options ');
+videoOptions.addEventListener('click', evt => {
+    evt.stopPropagation();
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    bottomSheetContent.innerHTML = ["91",
+        "57"].map((x, k) => {
+            return `<div class="menu-item" data-id="${k + 1}">
+                        <button class="menu-item-button">
+                            <div class="c3-icon">
+
+                            </div>
+                            <span>${x}</span>
+                        </button>
+                    </div>`
+        }).join('');
+    bottomSheetLayoutContentWrapper.style.maxHeight = 'none'
+    bottomSheetContainer.style.display = 'block';
+    document.querySelectorAll('.menu-item')
+        .forEach(element => {
+            element.addEventListener('click', evt => {
+                evt.stopPropagation();
+                bottomSheetContainer.style.display = 'none';
+                const id = parseInt(element.dataset.id)
+                if (id === 1) {
+                    showDialog(1)
+                } else if (id === 2) {
+                    showDialog(2)
+                }
+            })
+        });
+})
+
+
+
 

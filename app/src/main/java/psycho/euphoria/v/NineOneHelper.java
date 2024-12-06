@@ -125,7 +125,7 @@ public class NineOneHelper {
             c.addRequestProperty("Upgrade-Insecure-Requests", "1");
             c.addRequestProperty("X-Requested-With", "psycho.euphoria.v");
             c.addRequestProperty("Cookie", cookie);
-            //c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
+            c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
             //c.setInstanceFollowRedirects(false);
             //saveLog(311, videoAddress, Integer.toString(c.getResponseCode()));
             // if (c.getResponseCode() != 200) {
@@ -141,6 +141,7 @@ public class NineOneHelper {
             if (response == null) {
                 return null;
             }
+            //saveLog(312, videoAddress, response);
             String needle = "document.write(strencode2(\"";
             if (response.contains(needle)) {
                 title = Shared.substring(response, "<title>", "Chinese homemade video");
@@ -152,7 +153,7 @@ public class NineOneHelper {
                 response = Shared.substring(response, "encryptedUrl: '", "'");
                 response = get91PornVideo(response);
             }
-            //saveLog(312, videoAddress, response);
+
         } catch (Exception e) {
             Log.e("B5aOx2", String.format("process91Porn, %s>>>>>>>>>>>>>>>", e));
         }

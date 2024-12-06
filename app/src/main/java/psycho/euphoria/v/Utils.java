@@ -347,7 +347,6 @@ public class Utils {
     public static List<Video> scrap52Ck(int page) throws Exception {
         if (mRealAddress == null)
             mRealAddress = getRealAddress();
-        Log.e("B5aOx2", String.format("scrap52Ck, %s", mRealAddress));
         String home = page == 0 ? String.format("%s/vodtype/2.html", mRealAddress)
                 : String.format("%s/vodtype/2-%d.html", mRealAddress, page);
         HttpURLConnection u = (HttpURLConnection) new URL(home).openConnection();
