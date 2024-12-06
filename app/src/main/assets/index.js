@@ -59,10 +59,11 @@ function timeago(timestamp) {
 }
 const videoWithContextRenderer = document.querySelector('.video-with-context-renderer');
 
-function render() {
+function render(search, sort, videoType) {
     videoWithContextRenderer.innerHTML = '';
-    if (NativeAndroid != undefined) {
-        const videos = JSON.parse(NativeAndroid.loadVideos(null, 0, 1));
+    if (typeof NativeAndroid !== 'undefined') {
+
+        const videos = JSON.parse(NativeAndroid.loadVideos(search, sort, videoType));
         const buffer = [];
         videos.forEach(video => {
             buffer.push(`<div class="media-item" data-id="${video.id}">
@@ -131,5 +132,93 @@ function render() {
     var lazyLoadInstance = new LazyLoad({
         // Your custom settings go here
     });
+    document.querySelectorAll('.media-item')
+        .forEach(element => {
+            element.addEventListener('click', evt => {
+                evt.stopPropagation();
+                if (NativeAndroid != undefined)
+                    NativeAndroid.play(parseInt(element.dataset.id));
+            })
+        });
 }
-render();
+
+
+let mSort = (localStorage.getItem('sort') && parseInt(localStorage.getItem('sort'))) || 0;
+let mVideoType = (localStorage.getItem('videoType') && parseInt(localStorage.getItem('videoType'))) || 1;
+
+render(null, mSort, mVideoType);
+
+
+
+
+
+
+const bottomSheetContent = document.querySelector('.bottom-sheet-content');
+const bottomSheetLayoutContentWrapper = document.querySelector('.bottom-sheet-layout-content-wrapper');
+
+const videoList = document.querySelector('.video-list');
+videoList.addEventListener('click', evt => {
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    bottomSheetContent.innerHTML = ["91",
+        "57",
+        "收藏",
+        "屏蔽",
+        "露脸",
+        "其他",
+        "视频"].map((x, k) => {
+            return `<div class="menu-item" data-id="${k + 1}">
+                        <button class="menu-item-button">
+                            <div class="c3-icon">
+
+                            </div>
+                            <span>${x}</span>
+                        </button>
+                    </div>`
+        }).join('');
+    bottomSheetLayoutContentWrapper.style.maxHeight = 'none'
+    bottomSheetContainer.style.display = 'block';
+    document.querySelectorAll('.menu-item')
+        .forEach(element => {
+            element.addEventListener('click', evt => {
+                evt.stopPropagation();
+                bottomSheetContainer.style.display = 'none';
+                mVideoType = parseInt(element.dataset.id)
+                localStorage.setItem('videoType', element.dataset.id)
+                render(null, mSort, mVideoType)
+            })
+        });
+})
+
+
+
+
+
+
+
+
+
+
+
+const searchQuery = document.querySelector('.search-query');
+searchQuery.addEventListener('keydown', evt => {
+    if (evt.keyCode === 13) {
+        render(searchQuery.value, mSort, mVideoType)
+    }
+})
+
+
+
+const clearButton = document.querySelector('.clear-button');
+clearButton.addEventListener('click', evt => {
+    evt.stopImmediatePropagation();
+    searchQuery.value = ''
+})
+
+const searchButton = document.querySelector('.search-button');
+searchButton.addEventListener('click', evt => {
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    render(searchQuery.value, mSort, mVideoType)
+})
+

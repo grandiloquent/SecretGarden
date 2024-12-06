@@ -17,7 +17,9 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.MimeTypeMap;
@@ -46,10 +48,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import psycho.euphoria.v.Helpers;
 import psycho.euphoria.v.MainActivity;
+import psycho.euphoria.v.PlayerActivity;
 import psycho.euphoria.v.Shared;
+import psycho.euphoria.v.Utils;
 import psycho.euphoria.v.VideoDatabase;
 import psycho.euphoria.v.VideoDatabase.Video;
+import psycho.euphoria.v.WebActivity;
+
+import static psycho.euphoria.v.NineOneHelper.process91Porn;
 
 public class WebAppInterface {
 
@@ -311,13 +319,62 @@ public class WebAppInterface {
                 object.put("id", video.Id);
                 object.put("thumbnail", video.Thumbnail);
                 object.put("title", video.Title);
-                object.put("duration",video.Duration);
-                object.put("views",video.Views);
-                object.put("createAt",video.CreateAt);
+                object.put("duration", video.Duration);
+                object.put("views", video.Views);
+                object.put("createAt", video.CreateAt);
                 array.put(object);
             } catch (Exception e) {
             }
         }
         return array.toString();
+    }
+
+    @JavascriptInterface
+    public void play(int id) {
+        Log.e("B5aOx2", String.format("play, %s", id));
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+
+
+        new Thread(() -> {
+            Video video=mVideoDatabase.queryVideoSource(id);
+            String source = null;
+            Video old = mVideoDatabase.queryVideoSource(video.Id);
+            if (TextUtils.isEmpty(old.Source)) {
+                Pair<String, String> videos = null;
+                if (video.Url.startsWith("/")) {
+                    videos = WebActivity.processCk(mContext, Utils.getRealAddress() + video.Url);
+                } else {
+                    videos = process91Porn(mContext, video.Url);
+                    ;
+                }
+                if (videos != null) {
+                    source = videos.second;
+                }
+                if (!TextUtils.isEmpty(source)) {
+                    mVideoDatabase.updateVideoSource(video.Id, source);
+                }
+            } else {
+                source = old.Source;
+            }
+            if (!TextUtils.isEmpty(source)) {
+                mVideoDatabase.updateViews(video.Id);
+                String finalSource = source;
+                mContext.runOnUiThread(new Runnable() {
+                   @Override
+                   public void run() {
+                       PlayerActivity.launchActivity(mContext, finalSource, video.Title);
+                   }
+               });
+            } else {
+               mContext.runOnUiThread(new Runnable() {
+                   @Override
+                   public void run() {
+                       Helpers.tryGetCookie(mContext, video);
+                   }
+               });
+            }
+        }).start();
     }
 }
