@@ -70,6 +70,7 @@ public class WebAppInterface {
     SharedPreferences mSharedPreferences;
     TextToSpeech textToSpeech = null;
     private VideoDatabase mVideoDatabase;
+    String mAddress;
 
     public WebAppInterface(MainActivity context) {
         mContext = context;
@@ -103,6 +104,56 @@ public class WebAppInterface {
             Log.e("B5aOx2", String.format("downloadFile, %s", ignored.getMessage()));
         }
 
+    }
+
+    @JavascriptInterface
+    public void fetchVideos(int mode, int start, int end) {
+        if (mode == 1) {
+            new Thread(() -> {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+                final String cookie = sharedPreferences.getString(SettingsFragment.KEY_91_COOKIE, null);
+                final String userAgent = sharedPreferences.getString(SettingsFragment.KEY_USER_AGENT, null);
+                for (int i = start; i < end; i++) {
+                    try {
+                        List<Video> videos = NineOneHelper.scrap91Porn(i, cookie, userAgent);
+                        mVideoDatabase.insertVideos(videos);
+                        showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", i + 1, videos.size()));
+                    } catch (Exception e) {
+                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
+                    }
+                }
+
+            }).start();
+        } else {
+            new Thread(() -> {
+                // 500
+                for (int i = start; i < end; i++) {
+                    try {
+                        List<Video> videos = Utils.scrap52Ck(i);
+                        mVideoDatabase.insertVideos(videos);
+                        showProgress(String.format("已成功抓取第 %s 页", i + 1));
+                    } catch (Exception e) {
+                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
+                    }
+                }
+            }).start();
+        }
+    }
+
+    @JavascriptInterface
+    public String getRealAddress() {
+        if (mAddress == null) {
+            Thread thread = new Thread(() -> {
+                mAddress = Utils.getRealAddress();
+            });
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return mAddress;
     }
 
     @JavascriptInterface
@@ -195,11 +246,11 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
-    public String loadVideos(String search, int sort, int videoType,int limit,int offset) {
+    public String loadVideos(String search, int sort, int videoType, int limit, int offset) {
         if (mVideoDatabase == null)
             mVideoDatabase = new VideoDatabase(mContext,
                     new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        List<Video> videos = mVideoDatabase.queryVideos(search, sort, videoType,limit,offset);
+        List<Video> videos = mVideoDatabase.queryVideos(search, sort, videoType, limit, offset);
         JSONArray array = new JSONArray();
         for (Video video : videos) {
             try {
@@ -215,6 +266,14 @@ public class WebAppInterface {
             }
         }
         return array.toString();
+    }
+
+    @JavascriptInterface
+    public void moveVideo(int id, int videoType) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        mVideoDatabase.updateVideoType(id, videoType);
     }
 
     @JavascriptInterface
@@ -284,6 +343,26 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public void refreshVideo(int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        Thread thread = new Thread(() -> {
+            Video video = mVideoDatabase.queryVideoSource(id);
+            Helpers.updateSource(mContext, mVideoDatabase, video);
+            mContext.runOnUiThread(() -> {
+                Toast.makeText(mContext, "成功", Toast.LENGTH_SHORT).show();
+            });
+        });
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @JavascriptInterface
     public void scanFile(String fileName) {
         MediaScannerConnection.scanFile(mContext, new String[]{fileName}, new String[]{MimeTypeMap.getSingleton().getMimeTypeFromExtension(Shared.substringAfterLast(fileName, "."))}, new MediaScannerConnectionClient() {
             @Override
@@ -308,6 +387,10 @@ public class WebAppInterface {
             mContext.startActivity(buildSharedIntent(mContext, new File(path)));
         } catch (Exception ignored) {
         }
+    }
+
+    public void showProgress(String message) {
+        mContext.runOnUiThread(() -> Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show());
     }
 
     @JavascriptInterface
@@ -370,90 +453,6 @@ public class WebAppInterface {
         ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("demo", text);
         clipboard.setPrimaryClip(clip);
-    }
-
-    @JavascriptInterface
-    public void fetchVideos(int mode, int start, int end) {
-        if (mode == 1) {
-            new Thread(() -> {
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-                final String cookie = sharedPreferences.getString(SettingsFragment.KEY_91_COOKIE, null);
-                final String userAgent = sharedPreferences.getString(SettingsFragment.KEY_USER_AGENT, null);
-                for (int i = start; i < end; i++) {
-                    try {
-                        List<Video> videos = NineOneHelper.scrap91Porn(i, cookie, userAgent);
-                        mVideoDatabase.insertVideos(videos);
-                        showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", i + 1, videos.size()));
-                    } catch (Exception e) {
-                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
-                    }
-                }
-
-            }).start();
-        } else {
-            new Thread(() -> {
-                // 500
-                for (int i = start; i < end; i++) {
-                    try {
-                        List<Video> videos = Utils.scrap52Ck(i);
-                        mVideoDatabase.insertVideos(videos);
-                        showProgress(String.format("已成功抓取第 %s 页", i + 1));
-                    } catch (Exception e) {
-                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
-                    }
-                }
-            }).start();
-        }
-    }
-
-    String mAddress;
-
-    @JavascriptInterface
-    public String getRealAddress() {
-        if (mAddress == null) {
-            Thread thread = new Thread(() -> {
-                mAddress = Utils.getRealAddress();
-            });
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return mAddress;
-    }
-
-    @JavascriptInterface
-    public void refreshVideo(int id) {
-        if (mVideoDatabase == null)
-            mVideoDatabase = new VideoDatabase(mContext,
-                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        Thread thread = new Thread(() -> {
-            Video video = mVideoDatabase.queryVideoSource(id);
-            Helpers.updateSource(mContext, mVideoDatabase, video);
-            mContext.runOnUiThread(() -> {
-                Toast.makeText(mContext, "成功", Toast.LENGTH_SHORT).show();
-            });
-        });
-        thread.start();
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    @JavascriptInterface
-    public void moveVideo(int id){
-        if (mVideoDatabase == null)
-            mVideoDatabase = new VideoDatabase(mContext,
-                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        mVideoDatabase.updateVideoType(id, 5);
-    }
-    public void showProgress(String message) {
-        mContext.runOnUiThread(() -> Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show());
     }
 
     private static void openLocalPage(Context context, String path) {

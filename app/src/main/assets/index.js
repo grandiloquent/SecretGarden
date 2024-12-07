@@ -17,13 +17,13 @@ bottomSheetScrim.addEventListener('click', evt => {
 const videoWithContextRenderer = document.querySelector('.video-with-context-renderer');
 let mLimit = 20;
 let mOffset = 0;
-let mSearch=null;
+let mSearch = null;
 
 function render() {
 
     if (typeof NativeAndroid !== 'undefined') {
         let uri = "";
-        const videos = JSON.parse(NativeAndroid.loadVideos(mSearch,mSort,mVideoType, mLimit, mOffset));
+        const videos = JSON.parse(NativeAndroid.loadVideos(mSearch, mSort, mVideoType, mLimit, mOffset));
         // if (!/91porn/.test(videos[0].thumbnail)) {
         //     uri = NativeAndroid.getRealAddress();
         // }
@@ -112,18 +112,15 @@ function render() {
                 showActions(parseInt(element.dataset.id))
             })
         });
-        document.querySelectorAll('.media-item-headline:not([binded])')
+    document.querySelectorAll('.media-item-headline:not([binded])')
         .forEach(element => {
             element.setAttribute('binded', 'true');
             element.addEventListener('click', evt => {
                 evt.stopPropagation();
-                videoWithContextRenderer.innerHTML = '';
-                mOffset = 0;
-                render()
-                NativeAndroid.moveVideo(parseInt(element.dataset.id))
+                moveVideo(parseInt(element.dataset.id), 6)
             })
-        });  
-        
+        });
+
 }
 
 
@@ -144,179 +141,12 @@ const bottomSheetLayoutContentWrapper = document.querySelector('.bottom-sheet-la
 
 
 
-function showActions(id) {
-    bottomSheetContent.innerHTML = [
-        "91",
-        "57",
-        "收藏",
-        "屏蔽",
-        "露脸",
-        "其他",
-        "刷新"].map((x, k) => {
-            return `<div class="menu-item" data-id="${k + 1}">
-                        <button class="menu-item-button">
-                            <div class="c3-icon">
-
-                            </div>
-                            <span>${x}</span>
-                        </button>
-                    </div>`
-        }).join('');
-    bottomSheetLayoutContentWrapper.style.maxHeight = 'none'
-    bottomSheetContainer.style.display = 'block';
-    document.querySelectorAll('.menu-item')
-        .forEach(element => {
-            element.addEventListener('click', evt => {
-                evt.stopPropagation();
-                bottomSheetContainer.style.display = 'none';
-                NativeAndroid.refreshVideo(id);
-            })
-        });
-}
 
 
 
 
 
 
-
-
-
-const searchQuery = document.querySelector('.search-query');
-searchQuery.addEventListener('keydown', evt => {
-    if (evt.keyCode === 13) {
-        videoWithContextRenderer.innerHTML = '';
-        mOffset = 0;
-        mSearch=searchQuery.value;
-        render()
-    }
-})
-
-
-
-const clearButton = document.querySelector('.clear-button');
-clearButton.addEventListener('click', evt => {
-    evt.stopImmediatePropagation();
-    searchQuery.value = ''
-})
-
-const searchButton = document.querySelector('.search-button');
-searchButton.addEventListener('click', evt => {
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    videoWithContextRenderer.innerHTML = '';
-    mOffset = 0;
-    mSearch=searchQuery.value;
-    render()
-})
-
-function showDialog(mode) {
-    const div = document.createElement('div');
-    div.innerHTML = `<div class="dialog-container">
-        <div class="dialog">
-       
-            <div class="dialog-layout">
-                <div class="dialog-header">
-                    <div class="dialog-layout-title">
-                        对话框
-                    </div>
-                </div>
-                <div class="dialog-layout-container">
-                    <div class="dialog-layout-content">
-                        <div class="dialog-layout-content-inner">
-                            <div style="display: flex;flex-direction: column;gap: 8px;font-size: 14px;">
-                                <input class="dialog-input">
-                                <input class="dialog-input">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dialog-layout-footer">
-                        <div class="dialog-flex-button">
-                            取消
-                        </div>
-                        <div class="dialog-flex-button grey">
-                            确定
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-         
-    <div class="dialog-scrim">
-
-    </div>
-    </div>`;
-    document.body.appendChild(div);
-    div.querySelector('.dialog-flex-button:first-child')
-        .addEventListener('click', evt => {
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            div.remove();
-        });
-    const dialogInput1 = document.querySelector('.dialog-input:first-child');
-    const dialogInput2 = document.querySelector('.dialog-input:last-child');
-
-
-    div.querySelector('.dialog-flex-button:last-child')
-        .addEventListener('click', evt => {
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            div.remove();
-            const start = (dialogInput1.value && parseInt(dialogInput1.value)) || 0;
-            const end = (dialogInput2.value && parseInt(dialogInput2.value)) || 3;
-            if (typeof NativeAndroid !== 'undefined') {
-                NativeAndroid.fetchVideos(mode, start, end);
-            }
-
-        });
-
-    const dialogScrim = div.querySelector('.dialog-scrim');
-    dialogScrim.addEventListener('click', evt => {
-        evt.stopPropagation();
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-        div.remove();
-    })
-
-}
-
-
-
-
-
-
-const videoOptions = document.querySelector('.video-options ');
-videoOptions.addEventListener('click', evt => {
-    evt.stopPropagation();
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    bottomSheetContent.innerHTML = ["91",
-        "57"].map((x, k) => {
-            return `<div class="menu-item" data-id="${k + 1}">
-                        <button class="menu-item-button">
-                            <div class="c3-icon">
-
-                            </div>
-                            <span>${x}</span>
-                        </button>
-                    </div>`
-        }).join('');
-    bottomSheetLayoutContentWrapper.style.maxHeight = 'none'
-    bottomSheetContainer.style.display = 'block';
-    document.querySelectorAll('.menu-item')
-        .forEach(element => {
-            element.addEventListener('click', evt => {
-                evt.stopPropagation();
-                bottomSheetContainer.style.display = 'none';
-                const id = parseInt(element.dataset.id)
-                if (id === 1) {
-                    showDialog(1)
-                } else if (id === 2) {
-                    showDialog(2)
-                }
-            })
-        });
-})
 
 
 

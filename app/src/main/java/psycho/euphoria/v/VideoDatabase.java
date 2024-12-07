@@ -94,45 +94,52 @@ public class VideoDatabase extends SQLiteOpenHelper {
         cursor.close();
     }
 
-    public void deleteVideos(){
-        getWritableDatabase().delete("videos","ifnull(title,'')=''",null);
+    public void deleteVideos() {
+        getWritableDatabase().delete("videos", "ifnull(title,'')=''", null);
     }
-    public List<Video> queryVideos(String search, int sortBy, int videoType,int limit,int offset) {
+
+    public List<Video> queryVideos(String search, int sortBy, int videoType, int limit, int offset) {
         //getWritableDatabase().execSQL("ALTER TABLE videos ADD views int;");
         Cursor cursor;
         if (sortBy == 0) {
             if (search == null) {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? ORDER by create_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType),
-                Integer.toString(limit),Integer.toString(offset)});
+                        Integer.toString(limit), Integer.toString(offset)});
             } else {
                 // video_type = ? and  Integer.toString(videoType),
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%",
-                        Integer.toString(limit),Integer.toString(offset)});
+                        Integer.toString(limit), Integer.toString(offset)});
             }
         } else if (sortBy == 1) {
             if (search == null) {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? ORDER by create_at LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType),Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? ORDER by create_at LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at  LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%",Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at  LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             }
         } else if (sortBy == 2) {
             if (search == null) {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? ORDER by create_at LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType),Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? ORDER by create_at LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at  LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%",Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at  LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             }
         } else if (sortBy == 3) {
             if (search == null) {
                 // ,views DESC
-                cursor = getReadableDatabase().rawQuery("select * from videos where views >= 1 and video_type = ? ORDER by  update_at DESC", new String[]{Integer.toString(videoType),Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where views >= 1 and video_type = ? ORDER by  update_at DESC", new String[]{Integer.toString(videoType), Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC", new String[]{Integer.toString(videoType), "%" + search + "%",Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
+            }
+        } else if (sortBy == 5) {
+            if (search == null) {
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
+            } else {
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC ", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             }
         } else {
             if (search == null) {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType),Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC ", new String[]{Integer.toString(videoType), "%" + search + "%",Integer.toString(videoType),Integer.toString(limit),Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views ", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             }
         }
         List<Video> videos = new ArrayList<>();

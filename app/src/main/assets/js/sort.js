@@ -1,15 +1,15 @@
 
 
-function showActions(id) {
+const sortList = document.querySelector('.sort-list');
+sortList.addEventListener('click', evt => {
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
     bottomSheetContent.innerHTML = [
-        "91",
-        "57",
-        "收藏",
-        "屏蔽",
-        "露脸",
-        "其他",
-        "下载",
-        "刷新",].map((x, k) => {
+        "发布时间最晚",
+        "发布时间最早",
+        "更新时间最晚",
+        "播放次数最多",
+        "播放次数最少"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -26,38 +26,27 @@ function showActions(id) {
             element.addEventListener('click', evt => {
                 evt.stopPropagation();
                 bottomSheetContainer.style.display = 'none';
-                const index = parseInt(element.dataset.id);
-                switch (index) {
+                switch (parseInt(element.dataset.id)) {
                     case 1:
-                        moveVideo(id, 1)
+                        mSort = 0;
                         break;
                     case 2:
-                        moveVideo(id, 2)
+                        mSort = 1;
                         break;
                     case 3:
-                        moveVideo(id, 3)
+                        mSort = 3;
                         break;
                     case 4:
-                        moveVideo(id, 4)
+                        mSort = 5;
                         break;
                     case 5:
-                        moveVideo(id, 5)
+                        mSort = 6;
                         break;
-                    case 6:
-                        moveVideo(id, 6)
-                        break;
-                    case 8:
-                        NativeAndroid.refreshVideo(id);
-                        break
                 }
-
+                localStorage.setItem('sort', mSort)
+                videoWithContextRenderer.innerHTML = '';
+                mOffset = 0;
+                render()
             })
         });
-}
-
-
-function moveVideo(id, videoType) {
-    NativeAndroid.moveVideo(id, videoType)
-    const element = videoWithContextRenderer.querySelector('.media-item[data-id="' + id + '"]')
-    element.remove();
-}
+})

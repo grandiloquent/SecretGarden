@@ -873,10 +873,11 @@ button {
     cursor: pointer;
     background-color: rgba(0, 0, 0, 0.3);
 }
+
 .virtual {
     position: absolute;
     height: 200px;
     top: -200px;
     width: 100%;
-    pointer-event:none;
-  }
+    pointer-event: none;
+}
