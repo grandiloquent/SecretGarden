@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.webkit.WebView;
 
 import java.util.ArrayList;
@@ -111,5 +113,25 @@ public class MainActivity extends Activity {
         mWebView = WebUtils.initializeWebView(this);
         setContentView(mWebView);
         mWebView.loadUrl("file:///android_asset/index.html");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 0, 0, "刷新");
+        menu.add(0, 1, 0, "视频");
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case 0:
+                mWebView.reload();
+                break;
+            case 1:
+                Utils.startVideoList(MainActivity.this);
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

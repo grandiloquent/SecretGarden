@@ -18,15 +18,14 @@ const videoWithContextRenderer = document.querySelector('.video-with-context-ren
 let mLimit = 20;
 let mOffset = 0;
 let mSearch = null;
+let mImageHost = localStorage.getItem("imageHost");
 
 function render() {
 
     if (typeof NativeAndroid !== 'undefined') {
         let uri = "";
         const videos = JSON.parse(NativeAndroid.loadVideos(mSearch, mSort, mVideoType, mLimit, mOffset));
-        // if (!/91porn/.test(videos[0].thumbnail)) {
-        //     uri = NativeAndroid.getRealAddress();
-        // }
+
         mOffset += mLimit;
         const buffer = [];
         videos.forEach(video => {
@@ -35,7 +34,7 @@ function render() {
                         <div class="video-thumbnail-container-large">
                             <div class="video-thumbnail-bg">
                             </div>
-                            <img class="video-thumbnail-img lazy" src="${uri ? video.thumbnail.replace(/.+(?=\/images)/, uri) : video.thumbnail}">
+                            <img class="video-thumbnail-img lazy" src="${(mImageHost && video.thumbnail.indexOf(".xyz/") !== -1) ? video.thumbnail.replace(/.+(?=\/images)/, mImageHost) : video.thumbnail}">
                         </div>
                         <div class="time-display">
                             <div class="time-display-wrapper">

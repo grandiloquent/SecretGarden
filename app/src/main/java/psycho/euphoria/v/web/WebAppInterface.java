@@ -61,8 +61,10 @@ import psycho.euphoria.v.Utils;
 import psycho.euphoria.v.VideoDatabase;
 import psycho.euphoria.v.VideoDatabase.Video;
 import psycho.euphoria.v.WebActivity;
+import psycho.euphoria.v.tasks.DownloaderService;
 
 import static psycho.euphoria.v.NineOneHelper.process91Porn;
+import static psycho.euphoria.v.Utils.saveLog;
 
 public class WebAppInterface {
 
@@ -460,5 +462,55 @@ public class WebAppInterface {
         Intent launchIntent = pm.getLaunchIntentForPackage("com.android.chrome");
         launchIntent.setData(Uri.parse("http://" + Shared.getDeviceIP(context) + ":8500" + path));
         context.startActivity(launchIntent);
+    }
+
+    @JavascriptInterface
+    public void downloadVideo(int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        Video video = mVideoDatabase.queryVideoSource(id);
+        new Thread(() -> {
+            if (video.Source == null) {
+                // Attempt to resolve the address of the video file
+                Pair<String, String> videos = process91Porn(mContext, video.Url);
+                if (videos != null && videos.second != null) {
+                    mVideoDatabase.updateVideoSource(video.Id, videos.second);
+                    video.Source = videos.second;
+                } else {
+                    return;
+                }
+            }
+            Intent starter = new Intent(mContext, DownloaderService.class);
+            starter.putExtra(DownloaderService.EXTRA_VIDEO_TITLE, video.Title);
+            starter.putExtra(DownloaderService.EXTRA_VIDEO_ADDRESS, video.Source);
+            mContext.startService(starter);
+        }).start();
+    }
+
+    private String mImageHost;
+
+    @JavascriptInterface
+    public String getImageHost(int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        Video video = mVideoDatabase.queryVideoSource(id);
+        Thread t = new Thread(() -> {
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(getRealAddress() + video.Url).openConnection();
+                String s = Shared.readString(c);
+                mImageHost = Shared.substring(s, "data-original=\"", "/images");
+            } catch (Exception e) {
+            }
+
+        });
+        t.start();
+        try {
+            t.join();
+        } catch (Exception e) {
+        }
+        return mImageHost;
+
     }
 }

@@ -4,7 +4,8 @@ const videoList = document.querySelector('.video-list');
 videoList.addEventListener('click', evt => {
     evt.preventDefault();
     evt.stopImmediatePropagation();
-    bottomSheetContent.innerHTML = ["91",
+    bottomSheetContent.innerHTML = [
+        "91",
         "57",
         "收藏",
         "屏蔽",

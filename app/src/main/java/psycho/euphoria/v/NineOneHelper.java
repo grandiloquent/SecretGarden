@@ -149,6 +149,7 @@ public class NineOneHelper {
                 response = Uri.decode(response);
                 response = Shared.substring(response, "<source src='", "'");
             } else {
+                saveLog(312, videoAddress, response);
                 title = Shared.substring(response, "<title>", "Chinese homemade video");
                 response = Shared.substring(response, "encryptedUrl: '", "'");
                 response = get91PornVideo(response);
