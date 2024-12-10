@@ -8,7 +8,8 @@ function showActions(id) {
         "其他",
         "下载",
         "图片地址",
-        "刷新",].map((x, k) => {
+        "刷新",
+        "记录"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -45,10 +46,13 @@ function showActions(id) {
                     case 6:
                         const imageHost = NativeAndroid.getImageHost(id);
                         localStorage.setItem("imageHost", imageHost);
-                        mImageHost=imageHost;
+                        mImageHost = imageHost;
                         break;
                     case 7:
                         NativeAndroid.refreshVideo(id);
+                        break;
+                    case 8:
+                        record(id);
                         break;
                 }
 
@@ -61,4 +65,24 @@ function moveVideo(id, videoType) {
     NativeAndroid.moveVideo(id, videoType)
     const element = videoWithContextRenderer.querySelector('.media-item[data-id="' + id + '"]')
     element.remove();
+}
+
+function record(id) {
+    const object = localStorage.getItem('history') || [];
+    let founded = false;
+    for (let i = 0; i < object.length; i++) {
+        if (object[i]["videoType"] === mVideoType && object[i]["sort"] === mSort) {
+            object[i]["id"] = id;
+            founded = true;
+            break;
+        }
+    }
+    if (!founded) {
+        object.push({
+            "videoTypoe": mVideoType,
+            "sort": mSort,
+            "id": id
+        })
+    }
+    localStorage.setItem('history', JSON.stringify(object));
 }

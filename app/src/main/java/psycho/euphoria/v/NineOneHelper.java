@@ -7,6 +7,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
+import android.webkit.CookieManager;
 
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -39,6 +40,10 @@ import static psycho.euphoria.v.Utils.saveLog;
 import static psycho.euphoria.v.Utils.toSeconds;
 
 public class NineOneHelper {
+    public static String UserAgent;
+    public static String Cookie;
+
+
     public static List<Video> scrap91Porn(int page, String cookie, String userAgent) throws Exception {
         String home = "https://91porn.com/index.php";
         if (page != 0) {
@@ -108,24 +113,26 @@ public class NineOneHelper {
 //        if (response == null) {
 //            return null;
 //        }
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String cookie = preferences.getString(SettingsFragment.KEY_91_COOKIE, null);
-        String userAgent = preferences.getString(SettingsFragment.KEY_USER_AGENT, null);
+
         String title = null;
         //videoAddress="http://192.168.8.34:8080/";
         try {
             // new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809))
             HttpURLConnection c = (HttpURLConnection) new URL(videoAddress).openConnection();
+            c.setUseCaches(false);
             c.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-            c.addRequestProperty("Connection", "keep-alive");
+            c.addRequestProperty("Connection", "close");
             c.addRequestProperty("Host", "91porn.com");
-            c.addRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 11; Mi 10 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/90.0.4430.210 Mobile Safari/537.36");  // Mozilla/5.0 (Linux; Android 11; Redmi K30 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/94.0.4606.71 Mobile
+            // "Mozilla/5.0 (Linux; Android 11; Mi 10 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/90.0.4430.210 Mobile Safari/537.36"
+            c.addRequestProperty("User-Agent", UserAgent);  // Mozilla/5.0 (Linux; Android 11; Redmi K30 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/94.0.4606.71 Mobile
             c.addRequestProperty("Accept-Encoding", "gzip, deflate");
             c.addRequestProperty("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8");
             c.addRequestProperty("Upgrade-Insecure-Requests", "1");
             c.addRequestProperty("X-Requested-With", "psycho.euphoria.v");
-            c.addRequestProperty("Cookie", cookie);
-            c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
+            Log.e("B5aOx2", String.format("process91Porn, %s", CookieManager.getInstance().getCookie(videoAddress)));
+            c.addRequestProperty("Cookie", CookieManager.getInstance().getCookie(videoAddress));
+
+            //c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
             //c.setInstanceFollowRedirects(false);
             //saveLog(311, videoAddress, Integer.toString(c.getResponseCode()));
             // if (c.getResponseCode() != 200) {
@@ -150,6 +157,7 @@ public class NineOneHelper {
                 response = Shared.substring(response, "<source src='", "'");
             } else {
                 saveLog(312, videoAddress, response);
+                CookieManager.getInstance().removeAllCookie();
                 title = Shared.substring(response, "<title>", "Chinese homemade video");
                 response = Shared.substring(response, "encryptedUrl: '", "'");
                 response = get91PornVideo(response);

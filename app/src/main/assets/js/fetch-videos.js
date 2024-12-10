@@ -74,7 +74,8 @@ videoOptions.addEventListener('click', evt => {
     evt.preventDefault();
     evt.stopImmediatePropagation();
     bottomSheetContent.innerHTML = ["91",
-        "57"].map((x, k) => {
+        "57",
+        "历史"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -96,6 +97,23 @@ videoOptions.addEventListener('click', evt => {
                     showDialog(1)
                 } else if (id === 2) {
                     showDialog(2)
+                } else if (id === 3) {
+                    const object = localStorage.getItem('history') || [];
+                    let id = 0;
+                    let founded = false;
+                    for (let i = 0; i < object.length; i++) {
+                        if (object[i]["videoType"] === mVideoType && object[i]["sort"] === mSort) {
+                            id = object[i]["id"]
+                            founded = true;
+                            break;
+                        }
+                    }
+                    if (!founded) {
+                        return;
+                    }
+                    mOffset = NativeAndroid.indexOfVideo(mSort, mVideoType, id);
+                    videoWithContextRenderer.innerHTML = '';
+                    render()
                 }
             })
         });

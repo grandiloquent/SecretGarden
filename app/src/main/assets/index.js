@@ -23,7 +23,6 @@ let mImageHost = localStorage.getItem("imageHost");
 function render() {
 
     if (typeof NativeAndroid !== 'undefined') {
-        let uri = "";
         const videos = JSON.parse(NativeAndroid.loadVideos(mSearch, mSort, mVideoType, mLimit, mOffset));
 
         mOffset += mLimit;

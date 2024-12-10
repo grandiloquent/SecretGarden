@@ -41,12 +41,8 @@ public class TestActivity extends Activity {
 
                 }
                 if (url.contains("91porn.com")) {
-                    PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
-                            .edit()
-                            .putString(SettingsFragment.KEY_USER_AGENT, webView.getSettings().getUserAgentString())
-                            .putString(SettingsFragment.KEY_91_COOKIE, CookieManager.getInstance().getCookie(url))
-                            .apply();
-
+                    NineOneHelper.UserAgent = webView.getSettings().getUserAgentString();
+                    NineOneHelper.Cookie = CookieManager.getInstance().getCookie(url);
                 }
                 if (url.contains("cableav.tv")) {
                     PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
@@ -57,11 +53,10 @@ public class TestActivity extends Activity {
 
                 }
             }
-
             @SuppressLint("NewApi")
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                if (request.getUrl().toString().equals("https://91porn.com/view_video.php?viewkey=1647101175"))
+                if (request.getUrl().toString().startsWith("https://91porn.com/view_video.php?"))
                     request.getRequestHeaders().forEach((x, y) -> {
                         Log.e("B5aOx2", String.format("shouldInterceptRequest, %s:%s", x, y));
                     });
@@ -80,13 +75,8 @@ public class TestActivity extends Activity {
 
                 }
                 if (url.contains("91porn.com")) {
-                    Log.e("B5aOx2", String.format("onPageFinished, %s",  CookieManager.getInstance().getCookie(url)));
-                    PreferenceManager.getDefaultSharedPreferences(TestActivity.this)
-                            .edit()
-                            .putString(SettingsFragment.KEY_USER_AGENT, webView.getSettings().getUserAgentString())
-                            .putString(SettingsFragment.KEY_91_COOKIE, CookieManager.getInstance().getCookie(url))
-                            .apply();
-
+                    NineOneHelper.UserAgent = webView.getSettings().getUserAgentString();
+                    NineOneHelper.Cookie = CookieManager.getInstance().getCookie(url);
                 }
                 if (url.contains("cableav.tv")) {
                     PreferenceManager.getDefaultSharedPreferences(TestActivity.this)

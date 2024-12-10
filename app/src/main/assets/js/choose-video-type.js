@@ -10,8 +10,7 @@ videoList.addEventListener('click', evt => {
         "收藏",
         "屏蔽",
         "露脸",
-        "其他",
-        "视频"].map((x, k) => {
+        "其他"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">

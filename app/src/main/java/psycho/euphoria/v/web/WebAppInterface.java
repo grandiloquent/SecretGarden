@@ -271,6 +271,22 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public int indexOfVideo(int sort, int videoType, int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        List<Video> videos = mVideoDatabase.queryVideos(null, sort, videoType, 100000, 0);
+        JSONArray array = new JSONArray();
+        for (int i = 0; i < videos.size(); i++) {
+            if (videos.get(i).Id == id) {
+                if (i > 0) i--;
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    @JavascriptInterface
     public void moveVideo(int id, int videoType) {
         if (mVideoDatabase == null)
             mVideoDatabase = new VideoDatabase(mContext,
