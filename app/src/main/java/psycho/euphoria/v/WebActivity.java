@@ -198,7 +198,7 @@ public class WebActivity extends Activity {
         String title = Shared.substringBefore(response, "\n").trim();
         String src = Shared.substringAfter(response, "\n")
                 .replaceAll("\\\\", "");
-        return new String[]{title, src};
+        return new String[]{title, src,null};
     }
 
     private class JavaInterface {

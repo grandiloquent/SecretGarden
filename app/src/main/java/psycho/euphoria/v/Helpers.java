@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Pair;
 
+import org.json.JSONArray;
+
 import psycho.euphoria.v.VideoDatabase.Video;
 
 import static psycho.euphoria.v.NineOneHelper.process91Porn;
@@ -16,7 +18,7 @@ public class Helpers {
         context.startActivity(v);
     }
 
-    public static boolean updateSource(Context context, VideoDatabase videoDatabase, Video video) {
+    public static String updateSource(Context context, VideoDatabase videoDatabase, Video video) {
         String[] videos = null;
         if (video.Url.startsWith("/")) {
             videos = WebActivity.processCk(context, Utils.getRealAddress() + video.Url);
@@ -25,9 +27,12 @@ public class Helpers {
         }
         if (videos != null && !TextUtils.isEmpty(videos[1])) {
             videoDatabase.updateVideoSource(video.Id, videos);
-            return true;
+            JSONArray array = new JSONArray();
+            array.put(videos[0]);
+            array.put(videos[2]);
+            return array.toString();
         }
-        return false;
+        return null;
 
     }
 }

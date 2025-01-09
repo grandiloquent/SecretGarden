@@ -360,14 +360,16 @@ public class WebAppInterface {
         return null;
     }
 
+    String mResult;
+
     @JavascriptInterface
-    public void refreshVideo(int id) {
+    public String refreshVideo(int id) {
         if (mVideoDatabase == null)
             mVideoDatabase = new VideoDatabase(mContext,
                     new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
         Thread thread = new Thread(() -> {
             Video video = mVideoDatabase.queryVideoSource(id);
-            Helpers.updateSource(mContext, mVideoDatabase, video);
+            mResult = Helpers.updateSource(mContext, mVideoDatabase, video);
             mContext.runOnUiThread(() -> {
                 Toast.makeText(mContext, "成功", Toast.LENGTH_SHORT).show();
             });
@@ -378,6 +380,7 @@ public class WebAppInterface {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return mResult;
     }
 
     @JavascriptInterface
