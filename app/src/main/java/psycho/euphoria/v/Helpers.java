@@ -17,14 +17,14 @@ public class Helpers {
     }
 
     public static boolean updateSource(Context context, VideoDatabase videoDatabase, Video video) {
-        Pair<String, String> videos = null;
+        String[] videos = null;
         if (video.Url.startsWith("/")) {
             videos = WebActivity.processCk(context, Utils.getRealAddress() + video.Url);
         } else {
             videos = process91Porn(context, video.Url);
         }
-        if (videos != null && !TextUtils.isEmpty(videos.second)) {
-            videoDatabase.updateVideoSource(video.Id, videos.second);
+        if (videos != null && !TextUtils.isEmpty(videos[1])) {
+            videoDatabase.updateVideoSource(video.Id, videos);
             return true;
         }
         return false;

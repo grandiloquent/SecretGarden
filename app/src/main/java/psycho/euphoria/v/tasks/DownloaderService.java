@@ -146,13 +146,13 @@ public class DownloaderService extends Service implements RequestListener {
         return tasks;
     }
 
-    private Pair<String, String> getVideoInformation(String videoAddress) {
-        Pair<String, String> results;
+    private String[] getVideoInformation(String videoAddress) {
+        String[] results = null;
         if (videoAddress.contains("91porn.com")) {
             results = process91Porn(this, videoAddress);
 
         } else if (videoAddress.contains("xvideos.com")) {
-            results = WebActivity.processXVideos(videoAddress);
+            //results = WebActivity.processXVideos(videoAddress);
         } else {
             results = WebActivity.processCk(this, videoAddress);
         }

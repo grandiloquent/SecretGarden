@@ -313,7 +313,7 @@ public class WebAppInterface {
             String source = null;
             Video old = mVideoDatabase.queryVideoSource(video.Id);
             if (TextUtils.isEmpty(old.Source)) {
-                Pair<String, String> videos = null;
+                String[] videos = null;
                 if (video.Url.startsWith("/")) {
                     videos = WebActivity.processCk(mContext, Utils.getRealAddress() + video.Url);
                 } else {
@@ -321,10 +321,10 @@ public class WebAppInterface {
                     ;
                 }
                 if (videos != null) {
-                    source = videos.second;
+                    source = videos[1];
                 }
                 if (!TextUtils.isEmpty(source)) {
-                    mVideoDatabase.updateVideoSource(video.Id, source);
+                    mVideoDatabase.updateVideoSource(video.Id, videos);
                 }
             } else {
                 source = old.Source;
@@ -489,10 +489,10 @@ public class WebAppInterface {
         new Thread(() -> {
             if (video.Source == null) {
                 // Attempt to resolve the address of the video file
-                Pair<String, String> videos = process91Porn(mContext, video.Url);
-                if (videos != null && videos.second != null) {
-                    mVideoDatabase.updateVideoSource(video.Id, videos.second);
-                    video.Source = videos.second;
+                String[] videos = process91Porn(mContext, video.Url);
+                if (videos != null && videos[1] != null) {
+                    mVideoDatabase.updateVideoSource(video.Id, videos);
+                    video.Source = videos[1];
                 } else {
                     return;
                 }

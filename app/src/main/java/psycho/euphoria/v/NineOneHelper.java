@@ -56,7 +56,7 @@ public class NineOneHelper {
         u.addRequestProperty("Proxy-Connection", "keep-alive");
         u.addRequestProperty("Upgrade-Insecure-Requests", "1");
         u.addRequestProperty("User-Agent", userAgent);
-         //saveLog(312, home, Integer.toString(u.getResponseCode()));
+        //saveLog(312, home, Integer.toString(u.getResponseCode()));
         if (u.getResponseCode() != 200) {
             throw new IllegalStateException(Integer.toString(u.getResponseCode()));
         }
@@ -66,7 +66,7 @@ public class NineOneHelper {
         while ((line = reader.readLine()) != null) {
             stringBuilder.append(line).append('\n');
         }
-        saveLog(312, home, stringBuilder.toString());
+        //saveLog(312, home, stringBuilder.toString());
         Document document = Jsoup.parse(stringBuilder.toString());
         Elements videos = document.select(".videos-text-align");
         ZoneId zoneId = ZoneId.systemDefault();
@@ -75,7 +75,7 @@ public class NineOneHelper {
         for (Element v : videos) {
             Video video = new Video();
             // ".thumb-overlay + span"
-            video.Title = v.select( ".video-title").text();
+            video.Title = v.select(".video-title").text();
             if (video.Title == null || video.Title.isEmpty()) continue;
             video.Thumbnail = v.select(".thumb-overlay img").attr("src");
             try {
@@ -103,13 +103,15 @@ public class NineOneHelper {
         return vs;
     }
 
-    public static Pair<String, String> process91Porn(Context context, String videoAddress) {
+    public static String[] process91Porn(Context context, String videoAddress) {
         String response = null;
         //Native.fetch91Porn(Uri.parse(videoAddress).getQueryParameter("viewkey"));
 //        if (response == null) {
 //            return null;
 //        }
         String title = null;
+        String thumbnail = null;
+
         //videoAddress="http://192.168.8.34:8080/";
         try {
             // new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 10809))
@@ -121,7 +123,7 @@ public class NineOneHelper {
             // "Mozilla/5.0 (Linux; Android 11; Mi 10 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/90.0.4430.210 Mobile Safari/537.36"
             c.addRequestProperty("User-Agent", UserAgent);  // Mozilla/5.0 (Linux; Android 11; Redmi K30 Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/94.0.4606.71 Mobile
             c.addRequestProperty("Accept-Encoding", "gzip, deflate");
-            c.addRequestProperty("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8");
+            c.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
             c.addRequestProperty("Upgrade-Insecure-Requests", "1");
             c.addRequestProperty("X-Requested-With", "psycho.euphoria.v");
             Log.e("B5aOx2", String.format("process91Porn, %s", CookieManager.getInstance().getCookie(videoAddress)));
@@ -142,10 +144,11 @@ public class NineOneHelper {
             if (response == null) {
                 return null;
             }
-            //saveLog(312, videoAddress, response);
+            saveLog(312, videoAddress, response);
             String needle = "document.write(strencode2(\"";
             if (response.contains(needle)) {
                 title = Shared.substring(response, "<title>", "Chinese homemade video");
+                thumbnail=Shared.substring(response,"poster=\"","\"");
                 response = Shared.substring(response, needle, "\"");
                 response = Uri.decode(response);
                 response = Shared.substring(response, "<source src='", "'");
@@ -153,6 +156,7 @@ public class NineOneHelper {
                 saveLog(312, videoAddress, response);
                 CookieManager.getInstance().removeAllCookie();
                 title = Shared.substring(response, "<title>", "Chinese homemade video");
+                thumbnail=Shared.substring(response,"poster=\"","\"");
                 response = Shared.substring(response, "encryptedUrl: '", "'");
                 response = get91PornVideo(response);
             }
@@ -162,7 +166,7 @@ public class NineOneHelper {
         }
         //title
         if (title == null || response == null) return null;
-        return Pair.create(title.trim(), response);
+        return new String[]{title.trim(), response,thumbnail};
 //        JSONObject jsonObject = null;
 //        try {
 //            jsonObject = new JSONObject(response);

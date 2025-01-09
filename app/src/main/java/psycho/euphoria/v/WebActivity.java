@@ -187,7 +187,7 @@ public class WebActivity extends Activity {
         return Pair.create(response[0], response[1]);
     }
 
-    public static Pair<String, String> processCk(Context context, String videoAddress) {
+    public static String[] processCk(Context context, String videoAddress) {
         String response = Native.fetchCk(videoAddress, SettingsFragment.getString(context,
                         SettingsFragment.KEY_CK_COOKIE, null),
                 SettingsFragment.getString(context,
@@ -198,7 +198,7 @@ public class WebActivity extends Activity {
         String title = Shared.substringBefore(response, "\n").trim();
         String src = Shared.substringAfter(response, "\n")
                 .replaceAll("\\\\", "");
-        return Pair.create(title, src);
+        return new String[]{title, src};
     }
 
     private class JavaInterface {
@@ -216,16 +216,16 @@ public class WebActivity extends Activity {
             new Thread(() -> {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 String[] videoUris = null;
-                Pair<String, String> results;
+                String[] results = null;
                 if (uri.contains("91porn.com")) {
                     results = process91Porn(WebActivity.this, uri);
                 } else if (uri.contains("xvideos.com")) {
-                    results = processXVideos(uri);
+                    // results = processXVideos(uri);
                 } else {
                     results = processCk(WebActivity.this, uri);
                 }
                 if (results != null) {
-                    videoUris = new String[]{results.first, results.second};
+                    videoUris = new String[]{results[0], results[1]};
                 }
 //                else if (uri.contains("xvideos.com")) {
 //                    videoUris = Native.fetchXVideos(uri);

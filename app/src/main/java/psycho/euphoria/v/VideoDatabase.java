@@ -168,9 +168,9 @@ public class VideoDatabase extends SQLiteOpenHelper {
         });
     }
 
-    public void updateVideoSource(int id, String source) {
-        getWritableDatabase().execSQL("update videos set source = ?,update_at = ? where id = ?", new String[]{
-                source,
+    public void updateVideoSource(int id, String[] source) {
+        getWritableDatabase().execSQL("update videos set title =coalesce(?,title), source = ?, thumbnail = coalesce(?, thumbnail),update_at = ? where id = ?", new String[]{
+                        source[0],source[1],source[2],
                 Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
         });
