@@ -68,7 +68,7 @@ function moveVideo(id, videoType) {
 }
 
 function record(id) {
-    const object = localStorage.getItem('history') || [];
+    const object = JSON.parse(localStorage.getItem('history')||"[]");
     let founded = false;
     for (let i = 0; i < object.length; i++) {
         if (object[i]["videoType"] === mVideoType && object[i]["sort"] === mSort) {
@@ -79,7 +79,7 @@ function record(id) {
     }
     if (!founded) {
         object.push({
-            "videoTypoe": mVideoType,
+            "videoType": mVideoType,
             "sort": mSort,
             "id": id
         })

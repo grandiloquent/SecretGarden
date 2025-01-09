@@ -51,7 +51,7 @@ function showDialog(mode) {
             evt.stopImmediatePropagation();
             div.remove();
             const start = (dialogInput1.value && parseInt(dialogInput1.value)) || 0;
-            const end = (dialogInput2.value && parseInt(dialogInput2.value)) || 3;
+            const end = (dialogInput2.value && parseInt(dialogInput2.value)) || (start + 1);
             if (typeof NativeAndroid !== 'undefined') {
                 NativeAndroid.fetchVideos(mode, start, end);
             }
@@ -98,7 +98,8 @@ videoOptions.addEventListener('click', evt => {
                 } else if (id === 2) {
                     showDialog(2)
                 } else if (id === 3) {
-                    const object = localStorage.getItem('history') || [];
+                    const object = JSON.parse(localStorage.getItem('history') || "[]");
+                    console.log(localStorage.getItem('history'));
                     let id = 0;
                     let founded = false;
                     for (let i = 0; i < object.length; i++) {
@@ -113,6 +114,7 @@ videoOptions.addEventListener('click', evt => {
                     }
                     mOffset = NativeAndroid.indexOfVideo(mSort, mVideoType, id);
                     videoWithContextRenderer.innerHTML = '';
+
                     render()
                 }
             })

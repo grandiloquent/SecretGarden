@@ -253,7 +253,7 @@ public class Utils {
     }
 
     private static String getRealAddressInternal() throws Exception {
-        HttpsURLConnection u = (HttpsURLConnection) new URL("https://666937.xyz:8899/?u=http://52ck.cc/&p=/")
+        HttpsURLConnection u = (HttpsURLConnection) new URL("https://888tttz.com:8899/?u=http://52ck.cc/&p=/")
                 .openConnection();
         u.setInstanceFollowRedirects(false);
         if (u.getResponseCode() == 302) {

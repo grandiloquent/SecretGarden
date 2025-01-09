@@ -1,10 +1,7 @@
 package psycho.euphoria.v;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
 import android.webkit.CookieManager;
@@ -16,8 +13,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -61,7 +56,7 @@ public class NineOneHelper {
         u.addRequestProperty("Proxy-Connection", "keep-alive");
         u.addRequestProperty("Upgrade-Insecure-Requests", "1");
         u.addRequestProperty("User-Agent", userAgent);
-        //saveLog(311, home, Integer.toString(u.getResponseCode()));
+         //saveLog(312, home, Integer.toString(u.getResponseCode()));
         if (u.getResponseCode() != 200) {
             throw new IllegalStateException(Integer.toString(u.getResponseCode()));
         }
@@ -71,7 +66,7 @@ public class NineOneHelper {
         while ((line = reader.readLine()) != null) {
             stringBuilder.append(line).append('\n');
         }
-        //saveLog(312, home, stringBuilder.toString());
+        saveLog(312, home, stringBuilder.toString());
         Document document = Jsoup.parse(stringBuilder.toString());
         Elements videos = document.select(".videos-text-align");
         ZoneId zoneId = ZoneId.systemDefault();
@@ -79,7 +74,8 @@ public class NineOneHelper {
         List<Video> vs = new ArrayList<>();
         for (Element v : videos) {
             Video video = new Video();
-            video.Title = v.select(".thumb-overlay + span").text();
+            // ".thumb-overlay + span"
+            video.Title = v.select( ".video-title").text();
             if (video.Title == null || video.Title.isEmpty()) continue;
             video.Thumbnail = v.select(".thumb-overlay img").attr("src");
             try {
@@ -113,7 +109,6 @@ public class NineOneHelper {
 //        if (response == null) {
 //            return null;
 //        }
-
         String title = null;
         //videoAddress="http://192.168.8.34:8080/";
         try {
@@ -131,7 +126,6 @@ public class NineOneHelper {
             c.addRequestProperty("X-Requested-With", "psycho.euphoria.v");
             Log.e("B5aOx2", String.format("process91Porn, %s", CookieManager.getInstance().getCookie(videoAddress)));
             c.addRequestProperty("Cookie", CookieManager.getInstance().getCookie(videoAddress));
-
             //c.addRequestProperty("X-Forwarded-For", Shared.generateRandomIp());
             //c.setInstanceFollowRedirects(false);
             //saveLog(311, videoAddress, Integer.toString(c.getResponseCode()));

@@ -119,7 +119,8 @@ public class WebAppInterface {
                     try {
                         List<Video> videos = NineOneHelper.scrap91Porn(i, cookie, userAgent);
                         mVideoDatabase.insertVideos(videos);
-                        showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", i + 1, videos.size()));
+                        if (i % 10 == 0 || i + 1 == end)
+                            showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", i + 1, videos.size()));
                     } catch (Exception e) {
                         showProgress(String.format("抓取页面错误：%s", e.getMessage()));
                     }
@@ -133,7 +134,8 @@ public class WebAppInterface {
                     try {
                         List<Video> videos = Utils.scrap52Ck(i);
                         mVideoDatabase.insertVideos(videos);
-                        showProgress(String.format("已成功抓取第 %s 页", i + 1));
+                        if (i % 10 == 0 || i + 1 == end)
+                            showProgress(String.format("已成功抓取第 %s 页", i + 1));
                     } catch (Exception e) {
                         showProgress(String.format("抓取页面错误：%s", e.getMessage()));
                     }
@@ -276,10 +278,8 @@ public class WebAppInterface {
             mVideoDatabase = new VideoDatabase(mContext,
                     new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
         List<Video> videos = mVideoDatabase.queryVideos(null, sort, videoType, 100000, 0);
-        JSONArray array = new JSONArray();
         for (int i = 0; i < videos.size(); i++) {
             if (videos.get(i).Id == id) {
-                if (i > 0) i--;
                 return i;
             }
         }

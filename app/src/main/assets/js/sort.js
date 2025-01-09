@@ -9,7 +9,8 @@ sortList.addEventListener('click', evt => {
         "发布时间最早",
         "更新时间最晚",
         "播放次数最多",
-        "播放次数最少"].map((x, k) => {
+        "播放次数最少",
+        "已播更新最晚",].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -40,6 +41,9 @@ sortList.addEventListener('click', evt => {
                         mSort = 5;
                         break;
                     case 5:
+                        mSort = 7;
+                        break;
+                    case 6:
                         mSort = 6;
                         break;
                 }

@@ -17,31 +17,8 @@ public class VideoDatabase extends SQLiteOpenHelper {
         super(context, name, null, DATABASE_VERSION);
     }
 
-    public void updateVideoType(int id, int i) {
-        getWritableDatabase().execSQL("update videos set video_type = ?,update_at = ? where id = ?", new String[]{
-                Integer.toString(i),
-                Long.toString(System.currentTimeMillis()),
-                Integer.toString(id)
-        });
-    }
-
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL("    CREATE TABLE \"videos\" (\n" +
-                "            \"id\"            INTEGER PRIMARY KEY,\n" +
-                "            \"title\"            TEXT NOT NULL,\n" +
-                "            \"url\"            TEXT UNIQUE,\n" +
-                "            \"thumbnail\"            TEXT,\n" +
-                "            \"source\"            TEXT,\n" +
-                "              \"width\"            INTEGER,\n" +
-                "            \"height\"            INTEGER,\n" +
-                "            \"duration\"            INTEGER,\n" +
-                "            \"hidden\"            INTEGER,\n" +
-                "            \"video_type\"            INTEGER,\n" +
-                "            \"create_at\"            INTEGER,\n" +
-                "            \"update_at\"            INTEGER,\n" +
-                "            \"views\"            INTEGER);");
+    public void deleteVideos() {
+        getWritableDatabase().delete("videos", "ifnull(title,'')=''", null);
     }
 
     public void insertVideos(List<Video> videos) {
@@ -52,9 +29,12 @@ public class VideoDatabase extends SQLiteOpenHelper {
             for (Video video : videos) {
                 Cursor c = reader.rawQuery("select id from videos where url = ?", new String[]{video.Url});
                 if (c.moveToNext()) {
-                    db.execSQL("update videos set create_at = ? where url = ?", new String[]{
-                            Long.toString(video.CreateAt)
-                            , video.Url});
+                    db.execSQL("update videos set title = ?,thumbnail=?, create_at = ?,update_at = ? where url = ?", new String[]{
+                            video.Title,
+                            video.Thumbnail,
+                            Long.toString(video.CreateAt),
+                            Long.toString(System.currentTimeMillis()),
+                           video.Url});
                     c.close();
                     continue;
                 } //,video_type = 2
@@ -79,24 +59,16 @@ public class VideoDatabase extends SQLiteOpenHelper {
         }
     }
 
-    public void updateThumbnails() {
-        Cursor cursor = getReadableDatabase().rawQuery("select id,thumbnail from videos where video_type = 2", null);
-        SQLiteDatabase wd = getWritableDatabase();
-        while (cursor.moveToNext()) {
-            String thumbnail = cursor.getString(1);
-            if (thumbnail.startsWith("https://249999.xyz/")) {
-                thumbnail = thumbnail.replace("https://249999.xyz/", "https://666548.xyz/");
-                wd.execSQL("update videos set thumbnail = ? where id = ?", new String[]{
-                        thumbnail,
-                        Integer.toString(cursor.getInt(0))
-                });
-            }
+    public Video queryVideoSource(int id) {
+        Cursor cursor = getReadableDatabase().rawQuery("select id, title,source,url from videos where id = ? limit 1", new String[]{Integer.toString(id)});
+        Video video = new Video();
+        if (cursor.moveToNext()) {
+            video.Id = cursor.getInt(0);
+            video.Title = cursor.getString(1);
+            video.Source = cursor.getString(2);
+            video.Url = cursor.getString(3);
         }
-        cursor.close();
-    }
-
-    public void deleteVideos() {
-        getWritableDatabase().delete("videos", "ifnull(title,'')=''", null);
+        return video;
     }
 
     public List<Video> queryVideos(String search, int sortBy, int videoType, int limit, int offset) {
@@ -125,7 +97,8 @@ public class VideoDatabase extends SQLiteOpenHelper {
             }
         } else if (sortBy == 3) {
             if (search == null) {
-                cursor = getReadableDatabase().rawQuery("select * from videos where views >= 1 and video_type = ? ORDER by  update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
+                // views >= 1 and
+                cursor = getReadableDatabase().rawQuery("select * from (select * from videos where video_type = ? ORDER by update_at DESC) AS A ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
@@ -134,6 +107,13 @@ public class VideoDatabase extends SQLiteOpenHelper {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC ", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
+            }
+        }else if (sortBy == 6) {
+            if (search == null) {
+                // views >= 1 and
+                cursor = getReadableDatabase().rawQuery("select * from (select * from videos where views >= 1 and video_type = ? ORDER by update_at DESC) AS A ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
+            } else {
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
         } else {
             if (search == null) {
@@ -163,24 +143,20 @@ public class VideoDatabase extends SQLiteOpenHelper {
         return videos;
     }
 
-    public Video queryVideoSource(int id) {
-        Cursor cursor = getReadableDatabase().rawQuery("select id, title,source,url from videos where id = ? limit 1", new String[]{Integer.toString(id)});
-        Video video = new Video();
-        if (cursor.moveToNext()) {
-            video.Id = cursor.getInt(0);
-            video.Title = cursor.getString(1);
-            video.Source = cursor.getString(2);
-            video.Url = cursor.getString(3);
+    public void updateThumbnails() {
+        Cursor cursor = getReadableDatabase().rawQuery("select id,thumbnail from videos where video_type = 2", null);
+        SQLiteDatabase wd = getWritableDatabase();
+        while (cursor.moveToNext()) {
+            String thumbnail = cursor.getString(1);
+            if (thumbnail.startsWith("https://249999.xyz/")) {
+                thumbnail = thumbnail.replace("https://249999.xyz/", "https://666548.xyz/");
+                wd.execSQL("update videos set thumbnail = ? where id = ?", new String[]{
+                        thumbnail,
+                        Integer.toString(cursor.getInt(0))
+                });
+            }
         }
-        return video;
-    }
-
-    public void updateVideoSource(int id, String source) {
-        getWritableDatabase().execSQL("update videos set source = ?,update_at = ? where id = ?", new String[]{
-                source,
-                Long.toString(System.currentTimeMillis()),
-                Integer.toString(id)
-        });
+        cursor.close();
     }
 
     public void updateVideoInformation(String url, int duration, int width, int height) {
@@ -192,11 +168,45 @@ public class VideoDatabase extends SQLiteOpenHelper {
         });
     }
 
+    public void updateVideoSource(int id, String source) {
+        getWritableDatabase().execSQL("update videos set source = ?,update_at = ? where id = ?", new String[]{
+                source,
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(id)
+        });
+    }
+
+    public void updateVideoType(int id, int i) {
+        getWritableDatabase().execSQL("update videos set video_type = ?,update_at = ? where id = ?", new String[]{
+                Integer.toString(i),
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(id)
+        });
+    }
+
     public void updateViews(int id) {
         getWritableDatabase().execSQL("update videos set views = coalesce(views, 0)+1,update_at = ? where id = ?", new String[]{
                 Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
         });
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("    CREATE TABLE \"videos\" (\n" +
+                "            \"id\"            INTEGER PRIMARY KEY,\n" +
+                "            \"title\"            TEXT NOT NULL,\n" +
+                "            \"url\"            TEXT UNIQUE,\n" +
+                "            \"thumbnail\"            TEXT,\n" +
+                "            \"source\"            TEXT,\n" +
+                "              \"width\"            INTEGER,\n" +
+                "            \"height\"            INTEGER,\n" +
+                "            \"duration\"            INTEGER,\n" +
+                "            \"hidden\"            INTEGER,\n" +
+                "            \"video_type\"            INTEGER,\n" +
+                "            \"create_at\"            INTEGER,\n" +
+                "            \"update_at\"            INTEGER,\n" +
+                "            \"views\"            INTEGER);");
     }
 
     @Override

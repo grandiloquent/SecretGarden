@@ -14,8 +14,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.util.Log;
+import android.view.ActionMode;
+import android.view.ActionMode.Callback;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.webkit.WebView;
 
 import java.util.ArrayList;
@@ -26,6 +30,8 @@ import psycho.euphoria.v.web.WebUtils;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 
 public class MainActivity extends Activity {
+
+    WebView mWebView;
 
     public static void aroundFileUriExposedException() {
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
@@ -89,8 +95,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    WebView mWebView;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,4 +138,6 @@ public class MainActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 }
