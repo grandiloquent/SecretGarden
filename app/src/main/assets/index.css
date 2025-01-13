@@ -331,6 +331,9 @@ button {
     display: block;
     margin-bottom: 24px;
     margin-top: 0;
+    /* column-gap: 0;
+    padding: 0;
+    column-count: 2; */
 }
 
 .media-item {
@@ -345,7 +348,7 @@ button {
 .media-item-thumbnail-container {
     display: block;
     position: relative;
-    padding: 0 12px;
+     padding: 0 12px; 
 }
 
 .video-thumbnail-container-large {
@@ -392,6 +395,7 @@ button {
     width: 100%;
     min-height: 100%;
     margin: auto;
+    /* width: 100%; */
 }
 
 .time-display {

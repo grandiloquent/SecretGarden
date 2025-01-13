@@ -25,10 +25,10 @@
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
         </activity>
         <activity
             android:name=".VideoListActivity"
@@ -684,6 +684,12 @@
             android:label="浏览文件" />
         <activity android:name=".WebActivity" />
         <activity android:name=".TestActivity" />
+        <activity android:name="psycho.euphoria.v.VideoActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service android:name=".tasks.DownloaderService" />
     </application>

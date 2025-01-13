@@ -75,7 +75,9 @@ videoOptions.addEventListener('click', evt => {
     evt.stopImmediatePropagation();
     bottomSheetContent.innerHTML = ["91",
         "57",
-        "历史"].map((x, k) => {
+        "历史",
+        "91",
+        "57"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -116,6 +118,10 @@ videoOptions.addEventListener('click', evt => {
                     videoWithContextRenderer.innerHTML = '';
 
                     render()
+                } else if (id === 4) {
+                    NativeAndroid.getVideos(1, 0)
+                } else if (id === 5) {
+                    NativeAndroid.getVideos(2, 0)
                 }
             })
         });

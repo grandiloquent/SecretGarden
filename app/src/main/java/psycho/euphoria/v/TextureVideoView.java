@@ -128,6 +128,7 @@ public class TextureVideoView extends TextureView
             }
         }
     };
+
     private MediaPlayer.OnCompletionListener mCompletionListener =
             new MediaPlayer.OnCompletionListener() {
                 public void onCompletion(MediaPlayer mp) {

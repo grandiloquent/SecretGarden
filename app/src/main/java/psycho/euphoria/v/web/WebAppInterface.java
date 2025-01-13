@@ -73,6 +73,8 @@ public class WebAppInterface {
     TextToSpeech textToSpeech = null;
     private VideoDatabase mVideoDatabase;
     String mAddress;
+    String mResult;
+    private String mImageHost;
 
     public WebAppInterface(MainActivity context) {
         mContext = context;
@@ -109,6 +111,30 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public void downloadVideo(int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        Video video = mVideoDatabase.queryVideoSource(id);
+        new Thread(() -> {
+            if (video.Source == null) {
+                // Attempt to resolve the address of the video file
+                String[] videos = process91Porn(mContext, video.Url);
+                if (videos != null && videos[1] != null) {
+                    mVideoDatabase.updateVideoSource(video.Id, videos);
+                    video.Source = videos[1];
+                } else {
+                    return;
+                }
+            }
+            Intent starter = new Intent(mContext, DownloaderService.class);
+            starter.putExtra(DownloaderService.EXTRA_VIDEO_TITLE, video.Title);
+            starter.putExtra(DownloaderService.EXTRA_VIDEO_ADDRESS, video.Source);
+            mContext.startService(starter);
+        }).start();
+    }
+
+    @JavascriptInterface
     public void fetchVideos(int mode, int start, int end) {
         if (mode == 1) {
             new Thread(() -> {
@@ -142,6 +168,79 @@ public class WebAppInterface {
                 }
             }).start();
         }
+    }
+
+    @JavascriptInterface
+    public void getVideos(int mode, final int start) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        if (mode == 1) {
+            new Thread(() -> {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+                final String cookie = sharedPreferences.getString(SettingsFragment.KEY_91_COOKIE, null);
+                final String userAgent = sharedPreferences.getString(SettingsFragment.KEY_USER_AGENT, null);
+                int sv = start;
+                if (sv == 0) {
+                    sv = preferences.getInt("p", 0);
+                }
+                while (true) {
+                    try {
+                        List<Video> videos = NineOneHelper.scrap91Porn(sv, cookie, userAgent);
+                        mVideoDatabase.insertVideos(videos);
+                        if (sv % 10 == 0)
+                            showProgress(String.format("已成功抓取第 %s 页,共 %d 个视频", sv, videos.size()));
+                        sv++;
+                        preferences.edit().putInt("p", sv).apply();
+
+                    } catch (Exception e) {
+                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
+                    }
+                }
+
+            }).start();
+        } else {
+            new Thread(() -> {
+                int sv = start;
+                if (sv == 0) {
+                    sv = preferences.getInt("5", 0);
+                }
+                while (true) {
+                    try {
+                        List<Video> videos = Utils.scrap52Ck(sv);
+                        mVideoDatabase.insertVideos(videos);
+                        if (sv % 10 == 0)
+                            showProgress(String.format("已成功抓取第 %s 页", sv));
+                        sv++;
+                        preferences.edit().putInt("5", sv).apply();
+                    } catch (Exception e) {
+                        showProgress(String.format("抓取页面错误：%s", e.getMessage()));
+                    }
+                }
+            }).start();
+        }
+    }
+
+    @JavascriptInterface
+    public String getImageHost(int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        Video video = mVideoDatabase.queryVideoSource(id);
+        Thread t = new Thread(() -> {
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(getRealAddress() + video.Url).openConnection();
+                String s = Shared.readString(c);
+                mImageHost = Shared.substring(s, "data-original=\"", "/images");
+            } catch (Exception e) {
+            }
+
+        });
+        t.start();
+        try {
+            t.join();
+        } catch (Exception e) {
+        }
+        return mImageHost;
+
     }
 
     @JavascriptInterface
@@ -211,6 +310,20 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public int indexOfVideo(int sort, int videoType, int id) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        List<Video> videos = mVideoDatabase.queryVideos(null, sort, videoType, 100000, 0);
+        for (int i = 0; i < videos.size(); i++) {
+            if (videos.get(i).Id == id) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    @JavascriptInterface
     public void launchApp(String text) {
         Intent launchIntent = mContext.getPackageManager().getLaunchIntentForPackage(text);
         if (launchIntent != null) {
@@ -270,20 +383,6 @@ public class WebAppInterface {
             }
         }
         return array.toString();
-    }
-
-    @JavascriptInterface
-    public int indexOfVideo(int sort, int videoType, int id) {
-        if (mVideoDatabase == null)
-            mVideoDatabase = new VideoDatabase(mContext,
-                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        List<Video> videos = mVideoDatabase.queryVideos(null, sort, videoType, 100000, 0);
-        for (int i = 0; i < videos.size(); i++) {
-            if (videos.get(i).Id == id) {
-                return i;
-            }
-        }
-        return 0;
     }
 
     @JavascriptInterface
@@ -360,13 +459,12 @@ public class WebAppInterface {
         return null;
     }
 
-    String mResult;
-
     @JavascriptInterface
     public String refreshVideo(int id) {
         if (mVideoDatabase == null)
             mVideoDatabase = new VideoDatabase(mContext,
                     new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+        mResult = null;
         Thread thread = new Thread(() -> {
             Video video = mVideoDatabase.queryVideoSource(id);
             mResult = Helpers.updateSource(mContext, mVideoDatabase, video);
@@ -376,9 +474,11 @@ public class WebAppInterface {
         });
         thread.start();
         try {
-            thread.join();
+            thread.join(3000);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            mContext.runOnUiThread(() -> {
+                Toast.makeText(mContext, "超时", Toast.LENGTH_SHORT).show();
+            });
         }
         return mResult;
     }
@@ -481,55 +581,5 @@ public class WebAppInterface {
         Intent launchIntent = pm.getLaunchIntentForPackage("com.android.chrome");
         launchIntent.setData(Uri.parse("http://" + Shared.getDeviceIP(context) + ":8500" + path));
         context.startActivity(launchIntent);
-    }
-
-    @JavascriptInterface
-    public void downloadVideo(int id) {
-        if (mVideoDatabase == null)
-            mVideoDatabase = new VideoDatabase(mContext,
-                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        Video video = mVideoDatabase.queryVideoSource(id);
-        new Thread(() -> {
-            if (video.Source == null) {
-                // Attempt to resolve the address of the video file
-                String[] videos = process91Porn(mContext, video.Url);
-                if (videos != null && videos[1] != null) {
-                    mVideoDatabase.updateVideoSource(video.Id, videos);
-                    video.Source = videos[1];
-                } else {
-                    return;
-                }
-            }
-            Intent starter = new Intent(mContext, DownloaderService.class);
-            starter.putExtra(DownloaderService.EXTRA_VIDEO_TITLE, video.Title);
-            starter.putExtra(DownloaderService.EXTRA_VIDEO_ADDRESS, video.Source);
-            mContext.startService(starter);
-        }).start();
-    }
-
-    private String mImageHost;
-
-    @JavascriptInterface
-    public String getImageHost(int id) {
-        if (mVideoDatabase == null)
-            mVideoDatabase = new VideoDatabase(mContext,
-                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
-        Video video = mVideoDatabase.queryVideoSource(id);
-        Thread t = new Thread(() -> {
-            try {
-                HttpURLConnection c = (HttpURLConnection) new URL(getRealAddress() + video.Url).openConnection();
-                String s = Shared.readString(c);
-                mImageHost = Shared.substring(s, "data-original=\"", "/images");
-            } catch (Exception e) {
-            }
-
-        });
-        t.start();
-        try {
-            t.join();
-        } catch (Exception e) {
-        }
-        return mImageHost;
-
     }
 }

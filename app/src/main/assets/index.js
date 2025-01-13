@@ -115,11 +115,16 @@ function render() {
             element.setAttribute('binded', 'true');
             element.addEventListener('click', evt => {
                 evt.stopPropagation();
-                const id=parseInt(element.dataset.id);
+                const id = parseInt(element.dataset.id);
                 const results = NativeAndroid.refreshVideo(id);
-                const array = JSON.parse(results);
-                element.textContent = array[0];
-                document.querySelector('.media-item[data-id="'+id+'"] img.video-thumbnail-img').src = array[1];
+                try {
+                    if (!results) return;
+                    const array = JSON.parse(results);
+                    element.textContent = array[0];
+                    document.querySelector('.media-item[data-id="' + id + '"] img.video-thumbnail-img').src = array[1];
+                } catch (error) {
+
+                }
 
                 //moveVideo(parseInt(element.dataset.id), 6)
             })
