@@ -59,7 +59,7 @@ public class ScalableTextureView extends TextureView {
                             float dx = x - mLastTouchX;
                             float dy = y - mLastTouchY;
                             mMatrix.postTranslate(dx, dy);
-                            setTransform(mMatrix);
+                            setAnimationMatrix(mMatrix);
 
                         }
                         mLastTouchX = x;
@@ -69,10 +69,10 @@ public class ScalableTextureView extends TextureView {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         mActivePointerId = INVALID_POINTER_ID;
-                        if (isDoubleClick(event)) {
-                            mMatrix.reset();
-                            setTransform(mMatrix);
-                        }
+//                        if (isDoubleClick(event)) {
+//                            mMatrix.reset();
+//                            setAnimationMatrix(mMatrix);
+//                        }
                         break;
                     case MotionEvent.ACTION_POINTER_UP: {
                         final int pointerIndex = (event.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
@@ -131,7 +131,7 @@ public class ScalableTextureView extends TextureView {
             // Don't let the object get too small or too large.
             mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
             mMatrix.setScale(mScaleFactor, mScaleFactor, detector.getFocusX(), detector.getFocusY());
-            setTransform(mMatrix);
+            setAnimationMatrix(mMatrix);
             return true;
         }
     }

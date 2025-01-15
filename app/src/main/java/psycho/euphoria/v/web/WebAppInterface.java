@@ -54,10 +54,10 @@ import java.util.zip.GZIPInputStream;
 import psycho.euphoria.v.Helpers;
 import psycho.euphoria.v.MainActivity;
 import psycho.euphoria.v.NineOneHelper;
-import psycho.euphoria.v.PlayerActivity;
 import psycho.euphoria.v.SettingsFragment;
 import psycho.euphoria.v.Shared;
 import psycho.euphoria.v.Utils;
+import psycho.euphoria.v.VideoActivity;
 import psycho.euphoria.v.VideoDatabase;
 import psycho.euphoria.v.VideoDatabase.Video;
 import psycho.euphoria.v.WebActivity;
@@ -434,7 +434,7 @@ public class WebAppInterface {
                 mContext.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PlayerActivity.launchActivity(mContext, finalSource, video.Title);
+                        VideoActivity.launchActivity(mContext, finalSource, video.Title);
                     }
                 });
             } else {
