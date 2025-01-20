@@ -55,12 +55,22 @@ public class WebServer extends NanoHTTPD {
         } else if (session.getUri().equals("/api/video")) {
             if (session.getMethod() == Method.GET) {
                 Map<String, String> parameters = session.getParms();
-                int id = 0;
+                int id;
                 if (parameters.containsKey("id")) {
                     try {
                         id = Integer.parseInt(parameters.get("id"));
                         mVideoDatabase.updateDisplay(id);
                         return new Response(Status.OK, MIME_PLAINTEXT, "OK");
+                    } catch (Exception e) {
+                    }
+                }
+            } else if (session.getMethod() == Method.PUT) {
+                Map<String, String> parameters = session.getParms();
+                int id;
+                if (parameters.containsKey("id")) {
+                    try {
+                        id = Integer.parseInt(parameters.get("id"));
+                        return WebServerUtils.refreshVideo(mContext, mVideoDatabase, id);
                     } catch (Exception e) {
                     }
                 }

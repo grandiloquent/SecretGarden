@@ -73,7 +73,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
 
     public List<Video> queryVideos(String search, int sortBy, int videoType, int limit, int offset) {
         //getWritableDatabase().execSQL("ALTER TABLE videos ADD views int;");
-        Log.e("B5aOx2", String.format("queryVideos, search=%s,\nsort=%s,\nvideoType=%s,\nlimit=%s,\noffset=%s", search, sortBy, videoType, limit, offset));
+        // Log.e("B5aOx2", String.format("queryVideos, search=%s,\nsort=%s,\nvideoType=%s,\nlimit=%s,\noffset=%s", search, sortBy, videoType, limit, offset));
         Cursor cursor;
         if (sortBy == 0) {
             if (search == null) {

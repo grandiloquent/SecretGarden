@@ -462,6 +462,7 @@ public class WebAppInterface {
 
     @JavascriptInterface
     public String refreshVideo(int id) {
+
         if (mVideoDatabase == null)
             mVideoDatabase = new VideoDatabase(mContext,
                     new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());

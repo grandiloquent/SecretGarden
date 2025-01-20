@@ -7,11 +7,14 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import psycho.euphoria.v.Helpers;
 import psycho.euphoria.v.Shared;
 import psycho.euphoria.v.VideoDatabase;
 import psycho.euphoria.v.VideoDatabase.Video;
@@ -107,34 +111,29 @@ public class WebServerUtils {
             if (TextUtils.isEmpty(search))
                 search = null;
         }
-
-        int sort =0;
-
-        if(parameters.containsKey("sort")){
+        int sort = 0;
+        if (parameters.containsKey("sort")) {
             try {
                 sort = Integer.parseInt(parameters.get("sort"));
             } catch (Exception e) {
             }
         }
-        int videoType =0;
-
-        if(parameters.containsKey("videoType")){
+        int videoType = 0;
+        if (parameters.containsKey("videoType")) {
             try {
                 videoType = Integer.parseInt(parameters.get("videoType"));
             } catch (Exception e) {
             }
         }
-        int limit =0;
-
-        if(parameters.containsKey("limit")){
+        int limit = 0;
+        if (parameters.containsKey("limit")) {
             try {
                 limit = Integer.parseInt(parameters.get("limit"));
             } catch (Exception e) {
             }
         }
-        int offset =0;
-
-        if(parameters.containsKey("offset")){
+        int offset = 0;
+        if (parameters.containsKey("offset")) {
             try {
                 offset = Integer.parseInt(parameters.get("offset"));
             } catch (Exception e) {
@@ -191,5 +190,11 @@ public class WebServerUtils {
             config = Bitmap.Config.ARGB_8888;
         }
         return config;
+    }
+
+    public static Response refreshVideo(Context context, VideoDatabase database, int id) {
+        Video video = database.queryVideoSource(id);
+        String res = Helpers.updateSource(context, database, video);
+        return json(res);
     }
 }

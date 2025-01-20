@@ -145,17 +145,19 @@ async function render() {
             showActions(video.id)
         })
 
-        mediaItemHeadline.addEventListener('click', evt => {
+        mediaItemHeadline.addEventListener('click', async evt => {
             evt.stopPropagation();
             const id = video.id;
-            const results = NativeAndroid.refreshVideo(id);
+            const response = await fetch(`${baseUri}/api/video?id=${id}`, {
+                method: 'PUT'
+            });
+            const results = await response.json();
             try {
                 if (!results) return;
-                const array = JSON.parse(results);
-                element.textContent = array[0];
-                document.querySelector('.media-item[data-id="' + id + '"] img.video-thumbnail-img').src = array[1];
+                mediaItemHeadline.textContent = results[0];
+                document.querySelector('.media-item[data-id="' + id + '"] img.video-thumbnail-img').src = results[1];
             } catch (error) {
-
+                console.log(error)
             }
 
             //moveVideo(parseInt(element.dataset.id), 6)
@@ -187,7 +189,6 @@ window.addEventListener('scroll', evt => {
     if (element.getBoundingClientRect().top < 47) {
         element.setAttribute('view', '')
         const id = parseInt(element.dataset.id);
-        console.log(id)
         fetch(`${baseUri}/api/video?id=${id}`)
     }
 })
