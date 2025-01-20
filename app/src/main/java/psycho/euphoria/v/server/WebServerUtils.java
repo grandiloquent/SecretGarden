@@ -5,15 +5,25 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Environment;
+import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import psycho.euphoria.v.Shared;
+import psycho.euphoria.v.VideoDatabase;
+import psycho.euphoria.v.VideoDatabase.Video;
 import psycho.euphoria.v.server.NanoHTTPD.IHTTPSession;
 import psycho.euphoria.v.server.NanoHTTPD.Response;
 import psycho.euphoria.v.server.NanoHTTPD.Response.Status;
@@ -70,6 +80,70 @@ public class WebServerUtils {
         return null;
     }
 
+    public static String loadVideos(VideoDatabase database, String search, int sort, int videoType, int limit, int offset) {
+        List<Video> videos = database.queryVideos(search, sort, videoType, limit, offset);
+        JSONArray array = new JSONArray();
+        for (Video video : videos) {
+            try {
+                JSONObject object = new JSONObject();
+                object.put("id", video.Id);
+                object.put("thumbnail", video.Thumbnail);
+                object.put("title", video.Title);
+                object.put("duration", video.Duration);
+                object.put("views", video.Views);
+                object.put("createAt", video.CreateAt);
+                array.put(object);
+            } catch (Exception e) {
+            }
+        }
+        return array.toString();
+    }
+
+    public static Response loadVideos(IHTTPSession session, VideoDatabase database) {
+        Map<String, String> parameters = session.getParms();
+        String search = null;
+        if (parameters.containsKey(search)) {
+            search = parameters.get(search);
+            if (TextUtils.isEmpty(search))
+                search = null;
+        }
+
+        int sort =0;
+
+        if(parameters.containsKey("sort")){
+            try {
+                sort = Integer.parseInt(parameters.get("sort"));
+            } catch (Exception e) {
+            }
+        }
+        int videoType =0;
+
+        if(parameters.containsKey("videoType")){
+            try {
+                videoType = Integer.parseInt(parameters.get("videoType"));
+            } catch (Exception e) {
+            }
+        }
+        int limit =0;
+
+        if(parameters.containsKey("limit")){
+            try {
+                limit = Integer.parseInt(parameters.get("limit"));
+            } catch (Exception e) {
+            }
+        }
+        int offset =0;
+
+        if(parameters.containsKey("offset")){
+            try {
+                offset = Integer.parseInt(parameters.get("offset"));
+            } catch (Exception e) {
+            }
+        }
+        String videos = loadVideos(database, search, sort, videoType, limit, offset);
+        return json(videos);
+    }
+
     public static Response put(IHTTPSession session, Database database, int mode) {
         try {
             String contents = readString(session);
@@ -111,7 +185,6 @@ public class WebServerUtils {
         return resizeBitmapByScale(bitmap, scale, recycle);
     }
 
-
     private static Bitmap.Config getConfig(Bitmap bitmap) {
         Bitmap.Config config = bitmap.getConfig();
         if (config == null) {
@@ -119,6 +192,4 @@ public class WebServerUtils {
         }
         return config;
     }
-//1
-
 }

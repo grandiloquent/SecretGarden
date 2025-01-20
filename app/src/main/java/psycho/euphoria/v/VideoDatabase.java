@@ -34,7 +34,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
                             video.Thumbnail,
                             Long.toString(video.CreateAt),
                             Long.toString(System.currentTimeMillis()),
-                           video.Url});
+                            video.Url});
                     c.close();
                     continue;
                 } //,video_type = 2
@@ -73,6 +73,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
 
     public List<Video> queryVideos(String search, int sortBy, int videoType, int limit, int offset) {
         //getWritableDatabase().execSQL("ALTER TABLE videos ADD views int;");
+        Log.e("B5aOx2", String.format("queryVideos, search=%s,\nsort=%s,\nvideoType=%s,\nlimit=%s,\noffset=%s", search, sortBy, videoType, limit, offset));
         Cursor cursor;
         if (sortBy == 0) {
             if (search == null) {
@@ -108,14 +109,21 @@ public class VideoDatabase extends SQLiteOpenHelper {
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC ", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
-        }else if (sortBy == 6) {
+        } else if (sortBy == 6) {
             if (search == null) {
                 // views >= 1 and
                 cursor = getReadableDatabase().rawQuery("select * from (select * from videos where views >= 1 and video_type = ? ORDER by update_at DESC) AS A ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
-        } else {
+        }  else if (sortBy == 7) {
+            if (search == null) {
+                // views >= 1 and create_at DESC,
+                cursor = getReadableDatabase().rawQuery("select * from (select * from videos where video_type = ? ORDER by display ASC,create_at DESC) AS A ORDER by display ASC,create_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
+            } else {
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at DESC,display LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
+            }
+        }  else {
             if (search == null) {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
@@ -170,7 +178,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
 
     public void updateVideoSource(int id, String[] source) {
         getWritableDatabase().execSQL("update videos set title =coalesce(?,title), source = ?, thumbnail = coalesce(?, thumbnail),update_at = ? where id = ?", new String[]{
-                        source[0],source[1],source[2],
+                source[0], source[1], source[2],
                 Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
         });
@@ -190,6 +198,15 @@ public class VideoDatabase extends SQLiteOpenHelper {
                 Integer.toString(id)
         });
     }
+
+    public void updateDisplay(int id) {
+       //getWritableDatabase().execSQL("ALTER TABLE videos ADD COLUMN display INTEGER;");
+        getWritableDatabase().execSQL("update videos set display = coalesce(display, 0)+1,update_at = ? where id = ?", new String[]{
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(id)
+        });
+    }
+
 
     @Override
     public void onCreate(SQLiteDatabase db) {

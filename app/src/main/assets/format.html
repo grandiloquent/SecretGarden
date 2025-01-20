@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>格式</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        textarea {
+            outline: 0;
+            border: 1px solid #dadce0;
+            flex-grow: 1;
+            font-size: 16px;
+            padding: 8px;
+        }
+
+        button {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea></textarea>
+    <button>确认</button>
+</body>
+<script>
+
+    // fetch(`http://192.168.8.55:3000/api/files/size?path=/storage/emulated/0/Download`).then(res => res.text())
+    //     .then(res => {
+    //         console.log(humanFileSize(parseInt(res)));
+    //     })
+    async function readText() {
+        // const textarea = document.createElement("textarea");
+        // textarea.style.position = 'fixed';
+        // textarea.style.right = '100%';
+        // document.body.appendChild(textarea);
+        // textarea.value = message;
+        // textarea.select();
+        // document.execCommand('paste');
+        // return textarea.value;
+        let strings;
+        if (typeof NativeAndroid !== 'undefined') {
+            strings = NativeAndroid.readText()
+        } else {
+            strings = await navigator.clipboard.readText()
+        }
+        return strings
+    }
+    function writeText(message) {
+        const textarea = document.createElement("textarea");
+        textarea.style.position = 'fixed';
+        textarea.style.right = '100%';
+        document.body.appendChild(textarea);
+        textarea.value = message;
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+    }
+
+    function substring(strings, prefix, suffix) {
+        let start = strings.indexOf(prefix);
+        if (start === -1) {
+            return [0, 0]
+        }
+        start += prefix.length;
+        let end = strings.indexOf(suffix, start);
+        if (end === -1) {
+            return [0, 0]
+        }
+        return [start, end]
+    }
+
+    function substringAfter(string, delimiter, missingDelimiterValue) {
+        const index = string.indexOf(delimiter);
+        if (index === -1) {
+            return missingDelimiterValue || string;
+        } else {
+            return string.substring(index + delimiter.length);
+        }
+    }
+
+    function substringAfterLast(string, delimiter, missingDelimiterValue) {
+        const index = string.lastIndexOf(delimiter);
+        if (index === -1) {
+            return missingDelimiterValue || string;
+        } else {
+            return string.substring(index + delimiter.length);
+        }
+    }
+
+    function substringBefore(string, delimiter, missingDelimiterValue) {
+        const index = string.indexOf(delimiter);
+        if (index === -1) {
+            return missingDelimiterValue || string;
+        } else {
+            return string.substring(0, index);
+        }
+    }
+
+    function substringBeforeLast(string, delimiter, missingDelimiterValue) {
+        const index = string.lastIndexOf(delimiter);
+        if (index === -1) {
+            return missingDelimiterValue || string;
+        } else {
+            return string.substring(0, index);
+        }
+    }
+
+    const textarea = document.querySelector('textarea');
+
+    document.querySelector('button').addEventListener('click', async evt => {
+        //  const buffer=[];
+        // for (let index = 1; index <13; index++) {
+        //     /*
+        //     else if (e.KeyCode == Keys.F${index}) {
+        //      KeyF${index}Pressed();
+        //     }
+        //     */
+        //     buffer.push(`private void KeyF${index}Pressed(){
+        //     }`)
+
+        // }
+        // textarea.value=buffer.join('\n');
+        // shader(textarea.value)
+        //writeText(await replaceString())
+        writeText(formatString())
+    });
+
+
+    function formatString() {
+        const matches = [...`int id`
+            .matchAll(/([A-Za-z]+) ([A-Za-z]+),?/g)]
+        const buffer = [];
+        for (let index = 0; index < matches.length; index++) {
+            const element = matches[index];
+
+            if (element[1] !== 'String')
+                buffer.push(`${element[1]} ${element[2]} =0;
+            
+if(parameters.containsKey("${element[2]}")){
+try {
+ ${element[2]} = Integer.parseInt(parameters.get("${element[2]}"));
+} catch (Exception e) {
+                    }
+ }`);
+            else
+                buffer.push(`${element[1]} ${element[2]} = null;
+if(parameters.containsKey("${element[2]}")){
+ ${element[2]} =  parameters.get("${element[2]}") ;
+}      
+            
+                `);
+        }
+        console.log(buffer.join('\n'))
+        return `Map<String, String> parameters = session.getParms();
+        
+        ${buffer.join('\n')}
+        
+        // ${matches.map(x => x[2]).join(',')}
+
+        // ${matches.map(x => `${x[2]}=\${m${cap(x[2])}}`).join('&')}
+
+        // ${matches.map((x, k) => `${x[2]}=%s`).join(',\\n')}
+        `
+    }
+
+    async function replaceString() {
+        let value = await readText();
+        // x y width height left top right bottom
+
+        const array = "link note url content 2 5".split(' ');
+        for (let index = 0; index < array.length; index += 2) {
+            if (index + 1 >= array.length) continue;
+            const element = array[index];
+            value = value.replaceAll(array[index], array[index + 1])
+                .replaceAll(cap(camel(array[index])), cap(camel(array[index + 1])));
+        }
+
+        return value
+    }
+    function android() {
+        // width height 
+        const array = "left top right bottom"
+            .split(' ');
+        const buffer = [];
+        for (let index = 0; index < array.length; index++) {
+            const element = array[index];
+            // private int 
+            buffer.push(`m${cap(camel(element))} = mOrigin${cap(camel(element))};`)
+        }
+        return buffer.join('\n')
+    }
+    function shader(s) {
+        const buffer = [];
+        let array = s.split(/\s/g).filter(x => x.trim());
+        console.log(array)
+        for (let index = 0; index < array.length; index++) {
+            if (index + 1 >= array.length) continue;
+
+            const n1 = array[index];
+            const nn1 = decap(n1.replace('ShaderNode', ''))
+            const n2 = array[index + 1];
+            const nn2 = decap(n2.replace('ShaderNode', ''))
+            buffer.push((index === 0 ? `${nn1} = nodes.new('${n1}')
+` : '') + `${nn2} = nodes.new('${n2}')
+x=${nn1}.location.x+${nn1}.dimensions.x+offset
+${nn2}.location=mathutils.Vector((x,y))
+links.new(${nn1}.outputs[0],${nn2}.inputs[0])
+
+`)
+
+        }
+        return `import mathutils
+import bpy
+node_tree = bpy.context.view_layer.objects.active.active_material.node_tree
+nodes = node_tree.nodes
+links = node_tree.links
+offset = 60
+x = 0
+y = 0
+
+${buffer.join('\n')}
+`;
+    }
+
+    function decap(s) {
+        return s[0].toLowerCase() + s.substring(1);
+    }
+    function cap(s) {
+        return s[0].toUpperCase() + s.substring(1);
+    }
+    function camel(s) {
+        return s.replaceAll(/_([a-z])/g, m => m[1].toUpperCase())
+    }
+    const buf = [];
+    function traverse(element) {
+        const nodes = element.children;
+        for (let index = 0; index < nodes.length; index++) {
+            const element = nodes[index];
+            traverse(element);
+        }
+        traverse.push(`const ${div} = `)
+    }
+
+
+</script>
+
+</html>

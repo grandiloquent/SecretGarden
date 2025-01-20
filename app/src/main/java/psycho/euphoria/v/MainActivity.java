@@ -28,6 +28,7 @@ import android.webkit.WebView;
 import java.util.ArrayList;
 import java.util.List;
 
+import psycho.euphoria.v.server.WebService;
 import psycho.euphoria.v.web.WebUtils;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
@@ -145,9 +146,17 @@ public class MainActivity extends Activity {
         requestStorageManagerPermission(this);
         mWebView = WebUtils.initializeWebView(this);
         setContentView(mWebView);
-        mWebView.loadUrl("file:///android_asset/index.html");
+        launchServer(this);
+        mWebView.loadUrl("http:///0.0.0.0:9100/index.html");
     }
-
+    public static void launchServer(MainActivity context) {
+        Intent intent = new Intent(context, WebService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, 0, 0, "刷新");

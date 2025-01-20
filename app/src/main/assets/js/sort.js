@@ -10,7 +10,8 @@ sortList.addEventListener('click', evt => {
         "更新时间最晚",
         "播放次数最多",
         "播放次数最少",
-        "已播更新最晚",].map((x, k) => {
+        "已播更新最晚",
+        "看过次数"].map((x, k) => {
             return `<div class="menu-item" data-id="${k + 1}">
                         <button class="menu-item-button">
                             <div class="c3-icon">
@@ -41,10 +42,13 @@ sortList.addEventListener('click', evt => {
                         mSort = 5;
                         break;
                     case 5:
-                        mSort = 7;
+                        mSort = 9;
                         break;
                     case 6:
                         mSort = 6;
+                        break;
+                    case 7:
+                        mSort = 7;
                         break;
                 }
                 localStorage.setItem('sort', mSort)
