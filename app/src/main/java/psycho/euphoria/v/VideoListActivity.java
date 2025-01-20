@@ -157,9 +157,9 @@ public class VideoListActivity extends Activity {
         registerForContextMenu(mGridView);
         mVideoItemAdapter = new VideoItemAdapter(this);
         mGridView.setAdapter(mVideoItemAdapter);
-        mGridView.setOnItemClickListener((parent, view, position, id) -> VideoActivity.launchActivity(view.getContext(), new File(
-                mVideoItemAdapter.getItem(position).path
-        ), mSort));
+//        mGridView.setOnItemClickListener((parent, view, position, id) -> VideoActivity.launchActivity(view.getContext(), new File(
+//                mVideoItemAdapter.getItem(position).path
+//        ), mSort));
         getActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }

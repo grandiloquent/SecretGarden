@@ -57,7 +57,6 @@ import psycho.euphoria.v.NineOneHelper;
 import psycho.euphoria.v.SettingsFragment;
 import psycho.euphoria.v.Shared;
 import psycho.euphoria.v.Utils;
-import psycho.euphoria.v.VideoActivity;
 import psycho.euphoria.v.VideoDatabase;
 import psycho.euphoria.v.VideoDatabase.Video;
 import psycho.euphoria.v.WebActivity;
@@ -434,7 +433,9 @@ public class WebAppInterface {
                 mContext.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        VideoActivity.launchActivity(mContext, finalSource, video.Title);
+                        //VideoActivity.launchActivity(mContext, finalSource, video.Title);
+                        Toast.makeText(mContext, video.Title, Toast.LENGTH_SHORT).show();
+                        mContext.play(finalSource);
                     }
                 });
             } else {

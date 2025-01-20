@@ -35,8 +35,8 @@ public class FileListActivity extends Activity {
             File file = mFileAdapter.getItem(position);
             if (file.isDirectory())
                 mFileAdapter.setDirectory(file);
-            else
-                VideoActivity.launchActivity(FileListActivity.this, file,2);
+//            else
+//                VideoActivity.launchActivity(FileListActivity.this, file,2);
         });
     }
 
