@@ -135,6 +135,10 @@ public class WebAppInterface {
 
     @JavascriptInterface
     public void fetchVideos(int mode, int start, int end) {
+        if (mVideoDatabase == null)
+            mVideoDatabase = new VideoDatabase(mContext,
+                    new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
+
         if (mode == 1) {
             new Thread(() -> {
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -162,6 +166,7 @@ public class WebAppInterface {
                         if (i % 10 == 0 || i + 1 == end)
                             showProgress(String.format("已成功抓取第 %s 页", i + 1));
                     } catch (Exception e) {
+                        Log.e("B5aOx2", String.format("fetchVideos, %s", e.getMessage()));
                         showProgress(String.format("抓取页面错误：%s", e.getMessage()));
                     }
                 }

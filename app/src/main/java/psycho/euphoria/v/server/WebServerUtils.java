@@ -106,8 +106,8 @@ public class WebServerUtils {
     public static Response loadVideos(IHTTPSession session, VideoDatabase database) {
         Map<String, String> parameters = session.getParms();
         String search = null;
-        if (parameters.containsKey(search)) {
-            search = parameters.get(search);
+        if (parameters.containsKey("search")) {
+            search = parameters.get("search");
             if (TextUtils.isEmpty(search))
                 search = null;
         }

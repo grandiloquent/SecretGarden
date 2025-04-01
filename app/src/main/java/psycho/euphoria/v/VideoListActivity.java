@@ -37,6 +37,29 @@ public class VideoListActivity extends Activity {
     private int mSort = 2;
     private String mFilter;
     public static final String KEY_SORT = "sort";
+    SimpleVideoView mSimpleVideoView;
+    boolean mIsPlaying;
+
+    @Override
+    public void onBackPressed() {
+        if (mIsPlaying) {
+            mSimpleVideoView.release(true);
+            setContentView(mGridView);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    public void play(String s) {
+        mIsPlaying = true;
+        if (mSimpleVideoView == null) {
+            mSimpleVideoView = new SimpleVideoView(this);
+            View root = findViewById(android.R.id.content);
+            root.setBackgroundColor(getResources().getColor(R.color.black));
+        }
+        setContentView(mSimpleVideoView);
+        mSimpleVideoView.play(s);
+    }
 
     private void addBookmark() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -85,14 +108,15 @@ public class VideoListActivity extends Activity {
                 || pathname.getName().endsWith(".MP4")
                 || pathname.getName().endsWith(".MOV")
                 || pathname.getName().endsWith(".mov")
+
         )
                 && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
         if (videos != null) {
             for (File f : videos) {
-                f.renameTo(new File(f.getParentFile(), Shared.substringBefore(f.getName(), ".mp4") + ".v"));
+                f.renameTo(new File(f.getParentFile(), Shared.substringBefore(f.getName(), ".") + ".vv"));
             }
         }
-        videos = dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".v") && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
+        videos = dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".vv") && (TextUtils.isEmpty(filter) || pathname.getName().contains(filter)));
         if (videos == null) {
             return;
         }
@@ -157,9 +181,9 @@ public class VideoListActivity extends Activity {
         registerForContextMenu(mGridView);
         mVideoItemAdapter = new VideoItemAdapter(this);
         mGridView.setAdapter(mVideoItemAdapter);
-//        mGridView.setOnItemClickListener((parent, view, position, id) -> VideoActivity.launchActivity(view.getContext(), new File(
-//                mVideoItemAdapter.getItem(position).path
-//        ), mSort));
+        mGridView.setOnItemClickListener((parent, view, position, id) -> play(
+                mVideoItemAdapter.getItem(position).path
+        ));
         getActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }

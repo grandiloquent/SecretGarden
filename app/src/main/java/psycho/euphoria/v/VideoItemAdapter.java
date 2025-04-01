@@ -70,6 +70,7 @@ public class VideoItemAdapter extends BaseAdapter {
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
+        viewHolder.title.setTextColor(0xff999999);
         viewHolder.title.setText(Shared.substringAfterLast(mVideoItems.get(position).path, "/"));
         viewHolder.thumbnail.setTag(mVideoItems.get(position).path);
         viewHolder.thumbnail.setBackground(null);

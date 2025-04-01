@@ -223,6 +223,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
                 "            \"video_type\"            INTEGER,\n" +
                 "            \"create_at\"            INTEGER,\n" +
                 "            \"update_at\"            INTEGER,\n" +
+                "            \"display\"            INTEGER,\n" +
                 "            \"views\"            INTEGER);");
     }
 

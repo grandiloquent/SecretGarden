@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 
 import android.os.Process;
@@ -29,7 +30,12 @@ public class WebService extends Service {
                         new Intent(context, WebService.class).setAction(ACTION_DISMISS), PendingIntent.FLAG_IMMUTABLE)))
                 .setContentIntent(getPendingIntent(context))
                 .build();
-        context.startForeground(1, notification);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            context.startForeground(1, notification);
+        } else {
+            context.startForeground(1, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        }
     }
 
     public static void createNotificationChannel(Context context) {
