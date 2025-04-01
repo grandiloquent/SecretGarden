@@ -685,7 +685,7 @@
         <activity android:name=".WebActivity" />
         <activity android:name=".TestActivity" />
         <service android:name=".tasks.DownloaderService" />
-        <service android:name="psycho.euphoria.v.server.WebService"  android:foregroundServiceType="specialUse" />
+        <service android:name="psycho.euphoria.v.server.WebService" android:exported="true" android:foregroundServiceType="specialUse" />
     </application>
 
 

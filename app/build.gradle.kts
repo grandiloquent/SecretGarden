@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "psycho.euphoria.v"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "psycho.euphoria.v"
