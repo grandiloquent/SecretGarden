@@ -133,8 +133,8 @@ public class MainActivity extends Activity {
         if (checkSelfPermission(permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(permission.CAMERA);
         }
-        if (checkSelfPermission(permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            permissions.add(permission.WRITE_EXTERNAL_STORAGE);
+        if (checkSelfPermission(POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(POST_NOTIFICATIONS);
         }
         if (VERSION.SDK_INT < VERSION_CODES.R && checkSelfPermission(permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(permission.WRITE_EXTERNAL_STORAGE);

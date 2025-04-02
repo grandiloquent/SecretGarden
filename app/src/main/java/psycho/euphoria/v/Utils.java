@@ -28,8 +28,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
+import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -45,6 +47,10 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedTrustManager;
 
 import psycho.euphoria.v.VideoDatabase.Video;
 
@@ -59,10 +65,26 @@ public class Utils {
 
     public static String getRealAddress() {
         if (mRealAddress == null) {
+            String url = null;
             try {
-                mRealAddress = getRealAddressInternal();
+                HttpURLConnection connection = (HttpURLConnection) new URL("http://52ck.cc/")
+                        .openConnection();
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuffer content = new StringBuffer();
+                while ((inputLine = in.readLine()) != null) {
+                    content.append(inputLine);
+                }
+                in.close();
+                connection.disconnect();
+                url = Shared.substring(content.toString(), "strU=\"", "\"") + "http://52ck.cc/&p=/";
+
             } catch (Exception e) {
-                e.printStackTrace();
+            }
+            try {
+                mRealAddress = getRealAddressInternal(url);
+            } catch (Exception e) {
+                Log.e("B5aOx2", String.format("getRealAddress, %s", e.getMessage()));
             }
         }
         return mRealAddress;
@@ -252,8 +274,26 @@ public class Utils {
         return new String[]{urlConnection.getHeaderField("Location"), stringBuilder.toString()};
     }
 
-    private static String getRealAddressInternal() throws Exception {
-        HttpsURLConnection u = (HttpsURLConnection) new URL("https://888tttz.com:8899/?u=http://52ck.cc/&p=/")
+    private static String getRealAddressInternal(String url) throws Exception {
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509ExtendedTrustManager() {
+                    public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {}
+                    public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {}
+                    public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
+                    public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        };
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, null);
+
+        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        HttpURLConnection u = (HttpURLConnection) new URL(url)
                 .openConnection();
         u.setInstanceFollowRedirects(false);
         if (u.getResponseCode() == 302) {
