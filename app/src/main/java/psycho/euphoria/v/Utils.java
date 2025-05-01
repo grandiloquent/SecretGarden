@@ -277,21 +277,31 @@ public class Utils {
     private static String getRealAddressInternal(String url) throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509ExtendedTrustManager() {
-                    public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {}
-                    public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {}
-                    public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
-                    public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                    public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                    }
+
                     public X509Certificate[] getAcceptedIssuers() {
                         return new X509Certificate[0];
                     }
                 }
         };
-
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, null);
-
         HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
         HttpURLConnection u = (HttpURLConnection) new URL(url)
                 .openConnection();
@@ -383,11 +393,26 @@ public class Utils {
         Collections.sort(videos, (o1, o2) -> o2.first - o1.first);
         return new String[]{title, Shared.substringBeforeLast(hlsAddress, "/") + "/" + videos.get(0).second};
     }
-
+    public static String generateRandomIp() {
+        Random random = new Random();
+        return random.nextInt(256) + "." +
+                random.nextInt(256) + "." +
+                random.nextInt(256) + "." +
+                random.nextInt(256);
+    }
+    public static String generateRandomXForwardedFor(int numIps) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < numIps; i++) {
+            sb.append(generateRandomIp());
+            if (i < numIps - 1) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
     public static List<Video> scrap52Ck(int page) throws Exception {
         if (mRealAddress == null)
             mRealAddress = getRealAddress();
-        Log.e("B5aOx2", String.format("scrap52Ck, %s", mRealAddress));
         String home = page == 0 ? String.format("%s/vodtype/2.html", mRealAddress)
                 : String.format("%s/vodtype/2-%d.html", mRealAddress, page);
         HttpURLConnection u = (HttpURLConnection) new URL(home).openConnection();
@@ -396,13 +421,16 @@ public class Utils {
         u.addRequestProperty("Accept-Encoding", "gzip, deflate");
         u.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
         u.addRequestProperty("Cache-Control", "no-cache");
-        u.addRequestProperty("Cookie",
-                "Hm_lvt_7de8aab9069dc716bfdaa8d21d28b4da=1659408408; Hm_lpvt_7de8aab9069dc716bfdaa8d21d28b4da=1659411295");
         u.addRequestProperty("Pragma", "no-cache");
         u.addRequestProperty("Proxy-Connection", "keep-alive");
         u.addRequestProperty("Upgrade-Insecure-Requests", "1");
         u.addRequestProperty("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36");
+                "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
+
+        int numIps = new Random().nextInt(5) + 1;
+        String randomXFF = generateRandomXForwardedFor(numIps);
+
+        u.addRequestProperty("X-Forwarded-For",randomXFF);
         if (u.getResponseCode() != 200) {
             throw new IllegalStateException(Integer.toString(u.getResponseCode()));
         }

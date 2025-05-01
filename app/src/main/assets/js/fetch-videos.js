@@ -20,7 +20,7 @@ function showDialog(mode) {
                     </div>
                     <div class="dialog-layout-footer">
                         <div class="dialog-flex-button">
-                            取消
+                            最新
                         </div>
                         <div class="dialog-flex-button grey">
                             确定
@@ -40,11 +40,16 @@ function showDialog(mode) {
             evt.stopPropagation();
             evt.stopImmediatePropagation();
             div.remove();
+            if (typeof NativeAndroid !== 'undefined') {
+                localStorage.setItem('fetch-mode', mode);
+                NativeAndroid.fetchVideos(mode, 0, 10);
+            }
         });
     const dialogInput1 = document.querySelector('.dialog-input:first-child');
     const dialogInput2 = document.querySelector('.dialog-input:last-child');
 
 
+     
     div.querySelector('.dialog-flex-button:last-child')
         .addEventListener('click', evt => {
             evt.stopPropagation();
@@ -53,6 +58,8 @@ function showDialog(mode) {
             const start = (dialogInput1.value && parseInt(dialogInput1.value)) || 0;
             const end = (dialogInput2.value && parseInt(dialogInput2.value)) || (start + 1);
             if (typeof NativeAndroid !== 'undefined') {
+                localStorage.setItem('fetch-mode', mode);
+                localStorage.setItem('fetch-start'+mode, start);
                 NativeAndroid.fetchVideos(mode, start, end);
             }
 
@@ -127,6 +134,22 @@ videoOptions.addEventListener('click', evt => {
         });
 })
 
+document.querySelector('.load-videos')
+    .addEventListener('click', evt => {
+        if (typeof NativeAndroid !== 'undefined') {
+            const mode = parseInt(localStorage.getItem('fetch-mode')) || 1;
+            const start = parseInt(localStorage.getItem('fetch-start'+mode)) || 0;
+            NativeAndroid.fetchVideos(mode, start, start + 10);
+        }
+    })
 
-
-
+document.querySelector('.increase-videos')
+    .addEventListener('click', evt => {
+        if (typeof NativeAndroid !== 'undefined') {
+            const mode = parseInt(localStorage.getItem('fetch-mode')) || 1;
+           
+            const start = parseInt(localStorage.getItem('fetch-start'+mode)) || 0;
+            localStorage.setItem('fetch-start'+mode, start + 10)
+            evt.currentTarget.querySelector('.pivot-bar-item-title').textContent = start + 10;
+        }
+    })
