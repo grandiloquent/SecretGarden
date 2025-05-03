@@ -14,10 +14,12 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -197,4 +199,15 @@ public class WebServerUtils {
         String res = Helpers.updateSource(context, database, video);
         return json(res);
     }
+    public static String readBodyToString(IHTTPSession session) throws IOException {
+        InputStreamReader inputStreamReader = new InputStreamReader(session.getInputStream());
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        StringBuilder stringBuilder = new StringBuilder();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line).append("\n");
+        }
+        return stringBuilder.toString().trim(); // Trim any trailing newline
+    }
+
 }

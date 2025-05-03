@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION;
@@ -18,24 +20,41 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.ActionMode.Callback;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnSystemUiVisibilityChangeListener;
+import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.FrameLayout.LayoutParams;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import psycho.euphoria.v.ZoomableTextureView.Listener;
 import psycho.euphoria.v.server.WebService;
 import psycho.euphoria.v.web.WebUtils;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnVideoSizeChangedListener {
+    private int videoWidth;
+    private int videoHeight;
+
+    private MediaPlayer mediaPlayer;
+    int mWidth;
 
     WebView mWebView;
+    ZoomableTextureView textureView;
+    boolean mIsPlaying;
+    String path;
 
     public static void aroundFileUriExposedException() {
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
@@ -60,6 +79,56 @@ public class MainActivity extends Activity {
             intent.setData(uri);
             context.startActivity(intent);
         }
+    }
+
+    public static void launchServer(MainActivity context) {
+        Intent intent = new Intent(context, WebService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
+
+    public void play(String s) {
+        mIsPlaying = true;
+        if (textureView == null) {
+            textureView = new ZoomableTextureView(this);
+            View root = findViewById(android.R.id.content);
+            root.setBackgroundColor(getResources().getColor(R.color.black));
+        }
+        FrameLayout.LayoutParams layout = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        layout.gravity = Gravity.CENTER;
+        setContentView(textureView, layout);
+        path = s;
+        textureView.setSurfaceTextureListener(this);
+        textureView.setListener(new Listener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                if (e.getX() > (float) mWidth / 2) {
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() +
+                            mediaPlayer.getDuration() / 5);
+                } else {
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() -
+                            mediaPlayer.getDuration() / 5);
+                }
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                if (e.getX() > (float) mWidth / 2) {
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 10000);
+                } else {
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - 10000);
+                }
+                return true;
+            }
+        });
     }
 
     public static void requestNotificationPermission(Activity activity) {
@@ -97,6 +166,26 @@ public class MainActivity extends Activity {
                 }
             }
         }
+    }
+
+    private void adjustTextureViewSize(int viewWidth, int viewHeight) {
+        if (videoWidth == 0 || videoHeight == 0) {
+            return; // Video size not yet known
+        }
+        float aspectRatioVideo = (float) videoWidth / videoHeight;
+        float aspectRatioView = (float) viewWidth / viewHeight;
+        ViewGroup.LayoutParams layoutParams = textureView.getLayoutParams();
+        if (aspectRatioVideo > aspectRatioView) {
+            // Video is wider than the view - fit width
+            layoutParams.width = viewWidth;
+            layoutParams.height = (int) (viewWidth / aspectRatioVideo);
+        } else {
+            // Video is taller than or has the same aspect ratio as the view - fit height
+            layoutParams.height = viewHeight;
+            layoutParams.width = (int) (viewHeight * aspectRatioVideo);
+        }
+        mWidth = layoutParams.width;
+        textureView.setLayoutParams(layoutParams);
     }
 
     @Override
@@ -149,14 +238,36 @@ public class MainActivity extends Activity {
         launchServer(this);
         mWebView.loadUrl("http:///0.0.0.0:9100/index.html");
     }
-    public static void launchServer(MainActivity context) {
-        Intent intent = new Intent(context, WebService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mIsPlaying) {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            setContentView(mWebView);
+            return;
+        }
+        super.onBackPressed();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, 0, 0, "刷新");
@@ -177,28 +288,51 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    SimpleVideoView mSimpleVideoView;
-    boolean mIsPlaying;
-
-    public void play(String s) {
-        mIsPlaying = true;
-        if (mSimpleVideoView == null) {
-            mSimpleVideoView = new SimpleVideoView(this);
-            View root = findViewById(android.R.id.content);
-            root.setBackgroundColor(getResources().getColor(R.color.black));
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
         }
-        setContentView(mSimpleVideoView);
-        mSimpleVideoView.play(s);
     }
 
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        Surface s = new Surface(surface);
+        try {
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(path);
+            mediaPlayer.setSurface(s);
+            mediaPlayer.setOnPreparedListener(this);
+            mediaPlayer.setOnVideoSizeChangedListener(this);
+            mediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            Log.e("B5aOx2", String.format("onSurfaceTextureAvailable, %s", e.getMessage()));
+            e.printStackTrace();
+        }
+    }
 
     @Override
-    public void onBackPressed() {
-        if (mIsPlaying) {
-            mSimpleVideoView.release(true);
-            setContentView(mWebView);
-            return;
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
-        super.onBackPressed();
+        return true;
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+    }
+
+    @Override
+    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        videoWidth = width;
+        videoHeight = height;
+        adjustTextureViewSize(textureView.getWidth(), textureView.getHeight()); // Adjust based on current TextureView dimensions
     }
 }

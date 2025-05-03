@@ -1,0 +1,16 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <psycho.euphoria.v.ZoomableTextureView
+        android:id="@+id/textureView"
+        android:layout_width="match_parent"
+        android:background="@null"
+        android:layout_height="match_parent"
+        app:maxScale="6"
+        android:layout_gravity="center"/>
+
+</FrameLayout>

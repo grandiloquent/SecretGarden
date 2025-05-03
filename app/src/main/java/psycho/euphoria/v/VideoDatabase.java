@@ -116,14 +116,14 @@ public class VideoDatabase extends SQLiteOpenHelper {
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by update_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
-        }  else if (sortBy == 7) {
+        } else if (sortBy == 7) {
             if (search == null) {
                 // views >= 1 and create_at DESC,
                 cursor = getReadableDatabase().rawQuery("select * from (select * from videos where video_type = ? ORDER by display ASC,create_at DESC) AS A ORDER by display ASC,create_at DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by create_at DESC,display LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
-        }  else {
+        } else {
             if (search == null) {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
@@ -200,7 +200,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
     }
 
     public void updateDisplay(int id) {
-       //getWritableDatabase().execSQL("ALTER TABLE videos ADD COLUMN display INTEGER;");
+        //getWritableDatabase().execSQL("ALTER TABLE videos ADD COLUMN display INTEGER;");
         getWritableDatabase().execSQL("update videos set display = coalesce(display, 0)+1,update_at = ? where id = ?", new String[]{
                 Long.toString(System.currentTimeMillis()),
                 Integer.toString(id)
@@ -229,6 +229,36 @@ public class VideoDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    public void checkTables() {
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='image_uri'", null);
+        if (!cursor.moveToNext()) {
+            getWritableDatabase().execSQL("CREATE TABLE image_uri(id INTEGER PRIMARY KEY,uri TEXT)");
+        }
+        cursor.close();
+    }
+
+    public String queryImageUri() {
+        Cursor cursor = getReadableDatabase()
+                .rawQuery("select uri from image_uri where id = ?", new String[]{"1"});
+        String uri = null;
+        if (cursor.moveToNext()) {
+            uri = cursor.getString(0);
+        }
+        cursor.close();
+        return uri;
+    }
+
+    public long updateImageUri(String uri) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("id", 1);
+        values.put("uri", uri);
+        // The key here is SQLiteDatabase.insertWithOnConflict()
+        long result = db.insertWithOnConflict("image_uri", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        db.close();
+        return result; // Returns the row ID of the inserted/updated row
     }
 
     public static class Video {

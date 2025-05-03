@@ -1,27 +1,14 @@
 package psycho.euphoria.v.server;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 
-import psycho.euphoria.v.Shared;
 import psycho.euphoria.v.VideoDatabase;
-import psycho.euphoria.v.server.NanoHTTPD.IHTTPSession;
-import psycho.euphoria.v.server.NanoHTTPD.Method;
 import psycho.euphoria.v.server.NanoHTTPD.Response.Status;
-import psycho.euphoria.v.tasks.Database;
 
 import static psycho.euphoria.v.server.WebServerUtils.assetFiles;
 import static psycho.euphoria.v.server.WebServerUtils.error;
@@ -40,6 +27,7 @@ public class WebServer extends NanoHTTPD {
         mVideoDatabase = new VideoDatabase(mContext,
                 new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "videos.db").getAbsolutePath());
         mOkResponse = new Response(Status.OK, MIME_PLAINTEXT, "Ok");
+        mVideoDatabase.checkTables();
 
     }
 
@@ -71,8 +59,20 @@ public class WebServer extends NanoHTTPD {
                     try {
                         id = Integer.parseInt(parameters.get("id"));
                         return WebServerUtils.refreshVideo(mContext, mVideoDatabase, id);
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                     }
+                }
+            }
+        } else if (session.getUri().equals("/api/image")) {
+            if (session.getMethod() == Method.GET) {
+                return new Response(Status.OK, MIME_PLAINTEXT, mVideoDatabase.queryImageUri());
+            } else if (session.getMethod() == Method.PUT) {
+                try {
+                    String requestBody = WebServerUtils.readBodyToString(session);
+                    long result = mVideoDatabase.updateImageUri(requestBody);
+                    return new Response(Status.OK, MIME_PLAINTEXT, Long.toString(result));
+                } catch (IOException e) {
+                    return  error(e);
                 }
             }
         } else {

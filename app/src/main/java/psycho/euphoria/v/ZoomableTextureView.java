@@ -7,6 +7,8 @@ import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.TextureView;
@@ -15,46 +17,31 @@ import android.view.View;
 
 public class ZoomableTextureView extends TextureView {
 
-    private static final String SUPERSTATE_KEY = "superState";
-    private static final String MIN_SCALE_KEY = "minScale";
+    private static final int DRAG = 1;
     private static final String MAX_SCALE_KEY = "maxScale";
-
+    private static final String MIN_SCALE_KEY = "minScale";
+    private static final int NONE = 0;
+    private static final String SUPERSTATE_KEY = "superState";
+    private static final int ZOOM = 2;
     private Context context;
-
     private float minScale = 1f;
     private float maxScale = 5f;
     private float saveScale = 1f;
-
-    public void setMinScale(float scale) {
-        if (scale < 1.0f || scale > maxScale)
-            throw new RuntimeException("minScale can't be lower than 1 or larger than maxScale(" + maxScale + ")");
-        else minScale = scale;
-    }
-
-    public void setMaxScale(float scale) {
-        if (scale < 1.0f || scale < minScale)
-            throw new RuntimeException("maxScale can't be lower than 1 or minScale(" + minScale + ")");
-        else minScale = scale;
-    }
-
-    private static final int NONE = 0;
-    private static final int DRAG = 1;
-    private static final int ZOOM = 2;
+    private Listener mListener;
     private int mode = NONE;
-
     private Matrix matrix = new Matrix();
     private ScaleGestureDetector mScaleDetector;
     private float[] m;
-
     private PointF last = new PointF();
     private PointF start = new PointF();
     private float right, bottom;
-
+    private GestureDetector gestureDetector;
 
     public ZoomableTextureView(Context context) {
         super(context);
         this.context = context;
         initView(null);
+
     }
 
     public ZoomableTextureView(final Context context, final AttributeSet attrs) {
@@ -67,6 +54,84 @@ public class ZoomableTextureView extends TextureView {
         super(context, attrs, defStyle);
         this.context = context;
         initView(attrs);
+    }
+
+    public void setListener(Listener listener) {
+        mListener = listener;
+    }
+
+    public void setMaxScale(float scale) {
+        if (scale < 1.0f || scale < minScale)
+            throw new RuntimeException("maxScale can't be lower than 1 or minScale(" + minScale + ")");
+        else minScale = scale;
+    }
+
+    public void setMinScale(float scale) {
+        if (scale < 1.0f || scale > maxScale)
+            throw new RuntimeException("minScale can't be lower than 1 or larger than maxScale(" + maxScale + ")");
+        else minScale = scale;
+    }
+
+    private void initView(AttributeSet attrs) {
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.ZoomableTextureView,
+                0, 0);
+        try {
+            minScale = a.getFloat(R.styleable.ZoomableTextureView_minScale, minScale);
+            maxScale = a.getFloat(R.styleable.ZoomableTextureView_maxScale, maxScale);
+        } finally {
+            a.recycle();
+        }
+        gestureDetector = new GestureDetector(context, new OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                if (mListener != null)
+                    return mListener.onDown(e);
+                // Finger has touched the screen
+                return true; // Return true if you want to handle other gestures after ACTION_DOWN
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                // Finger has moved quickly across the screen
+                // velocityX: The velocity of the fling in the x direction (pixels per second).
+                // velocityY: The velocity of the fling in the y direction (pixels per second).
+                return true;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                // Finger has been kept on the screen for a long time
+                if (mListener != null)
+                    mListener.onLongPress(e);
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                // Finger is moving on the screen
+                // e1: The first down motion event that started the scrolling.
+                // e2: The current motion event that triggered the onScroll.
+                // distanceX: The distance moved horizontally since the last call to onScroll.
+                // distanceY: The distance moved vertically since the last call to onScroll.
+                return true;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+                // Finger is still on the screen after some time but not moving
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                // Finger has lifted from the screen after a short touch
+                if (mListener != null)
+                    return mListener.onSingleTapUp(e);
+                return true;
+            }
+        });
+        setOnTouchListener(new ZoomOnTouchListeners());
+
     }
 
     @Override
@@ -90,19 +155,12 @@ public class ZoomableTextureView extends TextureView {
         super.onRestoreInstanceState(state);
     }
 
-    private void initView(AttributeSet attrs) {
-        TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs,
-                R.styleable.ZoomableTextureView,
-                0, 0);
-        try {
-            minScale = a.getFloat(R.styleable.ZoomableTextureView_minScale, minScale);
-            maxScale = a.getFloat(R.styleable.ZoomableTextureView_maxScale, maxScale);
-        } finally {
-            a.recycle();
-        }
+    public interface Listener {
+        void onLongPress(MotionEvent e);
 
-        setOnTouchListener(new ZoomOnTouchListeners());
+        boolean onSingleTapUp(MotionEvent e);
+
+        boolean onDown(MotionEvent e);
     }
 
     private class ZoomOnTouchListeners implements OnTouchListener {
@@ -114,16 +172,13 @@ public class ZoomableTextureView extends TextureView {
 
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
-
             mScaleDetector.onTouchEvent(motionEvent);
-
+            gestureDetector.onTouchEvent(motionEvent);
             matrix.getValues(m);
             float x = m[Matrix.MTRANS_X];
             float y = m[Matrix.MTRANS_Y];
             PointF curr = new PointF(motionEvent.getX(), motionEvent.getY());
-
             switch (motionEvent.getActionMasked()) {
-
                 case MotionEvent.ACTION_DOWN:
                     last.set(motionEvent.getX(), motionEvent.getY());
                     start.set(last);
@@ -145,7 +200,6 @@ public class ZoomableTextureView extends TextureView {
                             deltaY = -y;
                         else if (y + deltaY < -bottom)
                             deltaY = -(y + bottom);
-
                         if (x + deltaX > 0)
                             deltaX = -x;
                         else if (x + deltaX < -right)
@@ -164,12 +218,6 @@ public class ZoomableTextureView extends TextureView {
         }
 
         private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-
-            @Override
-            public boolean onScaleBegin(ScaleGestureDetector detector) {
-                mode = ZOOM;
-                return true;
-            }
 
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
@@ -191,16 +239,18 @@ public class ZoomableTextureView extends TextureView {
                         matrix.getValues(m);
                         float x = m[Matrix.MTRANS_X];
                         float y = m[Matrix.MTRANS_Y];
-                        if (0 < getWidth()) {
-                            if (y < -bottom)
-                                matrix.postTranslate(0, -(y + bottom));
-                            else if (y > 0)
-                                matrix.postTranslate(0, -y);
-                        } else {
-                            if (x < -right)
-                                matrix.postTranslate(-(x + right), 0);
-                            else if (x > 0)
-                                matrix.postTranslate(-x, 0);
+                        if (mScaleFactor < 1) {
+                            if (0 < getWidth()) {
+                                if (y < -bottom)
+                                    matrix.postTranslate(0, -(y + bottom));
+                                else if (y > 0)
+                                    matrix.postTranslate(0, -y);
+                            } else {
+                                if (x < -right)
+                                    matrix.postTranslate(-(x + right), 0);
+                                else if (x > 0)
+                                    matrix.postTranslate(-x, 0);
+                            }
                         }
                     }
                 } else {
@@ -221,7 +271,14 @@ public class ZoomableTextureView extends TextureView {
                 }
                 return true;
             }
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                mode = ZOOM;
+                return true;
+            }
         }
     }
+
 
 }
