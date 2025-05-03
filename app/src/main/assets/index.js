@@ -20,12 +20,21 @@ let mOffset = 0;
 let mSearch = null;
 let mImageHost = localStorage.getItem("imageHost");
 let mIsLoading = false;
-const baseUri = window.location.host === "127.0.0.1:5500" ? "http://192.168.35.56:9100" : "";
+const baseUri = window.location.host === "127.0.0.1:5500" ? "http://192.168.8.220:9100" : "";
 
+function getHost(uri, isAfter) {
+    let index = uri.indexOf('//');
+    if (index === -1) return uri;
+    index = uri.indexOf('/', index + 2);
+    if (index === -1) return uri;
+    return isAfter ? uri.substring(index) : uri.substring(0, index);
+}
 async function render() {
     if (mIsLoading) return;
     mIsLoading = true;
     const videos = await (await fetch(`${baseUri}/api/videos?search=${encodeURIComponent(mSearch || '')}&sort=${mSort}&videoType=${mVideoType}&limit=${mLimit}&offset=${mOffset}`)).json();
+    const imageUri = await (await fetch(`${baseUri}/api/image`)).text();
+
     mIsLoading = false;
     mOffset += mLimit;
     var documentFragment = document.createDocumentFragment();
@@ -47,7 +56,7 @@ async function render() {
         videoThumbnailContainerLarge.appendChild(videoThumbnailBg);
         const videoThumbnailImgLazy = document.createElement('img');
         videoThumbnailImgLazy.setAttribute("class", "video-thumbnail-img lazy");
-        videoThumbnailImgLazy.setAttribute("src", (mImageHost && video.thumbnail.indexOf(".xyz/") !== -1) ? video.thumbnail.replace(/.+(?=\/images)/, mImageHost) : video.thumbnail);
+        videoThumbnailImgLazy.setAttribute("src", video.videoType == 2 && imageUri ? `${imageUri}${getHost(video.thumbnail, true)}` : video.thumbnail);
         videoThumbnailContainerLarge.appendChild(videoThumbnailImgLazy);
         const timeDisplay = document.createElement('div');
         timeDisplay.setAttribute("class", "time-display");
@@ -137,12 +146,14 @@ async function render() {
         documentFragment.appendChild(mediaItem);
         mediaItem.addEventListener('click', evt => {
             evt.stopPropagation();
-            if (NativeAndroid != undefined)
+            if (typeof NativeAndroid !== 'undefined')
                 NativeAndroid.play(video.id);
+            else
+                window.open(video.source, '_blank')
         })
         bottomSheetRenderer.addEventListener('click', evt => {
             evt.stopPropagation();
-            showActions(video.id)
+            showActions(video.id, getHost(video.thumbnail))
         })
 
         mediaItemHeadline.addEventListener('click', async evt => {

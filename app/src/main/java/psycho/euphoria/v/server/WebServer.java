@@ -2,6 +2,7 @@ package psycho.euphoria.v.server;
 
 import android.content.Context;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,10 +69,12 @@ public class WebServer extends NanoHTTPD {
                 return new Response(Status.OK, MIME_PLAINTEXT, mVideoDatabase.queryImageUri());
             } else if (session.getMethod() == Method.PUT) {
                 try {
-                    String requestBody = WebServerUtils.readBodyToString(session);
+                    String requestBody = WebServerUtils.readString(session);
+                    Log.e("B5aOx2", String.format("serve, %s", requestBody));
                     long result = mVideoDatabase.updateImageUri(requestBody);
                     return new Response(Status.OK, MIME_PLAINTEXT, Long.toString(result));
-                } catch (IOException e) {
+                } catch (Exception e) {
+                    Log.e("B5aOx2", String.format("serve, %s", e.getMessage()));
                     return  error(e);
                 }
             }

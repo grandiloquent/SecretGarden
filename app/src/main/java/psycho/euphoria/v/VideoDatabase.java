@@ -137,12 +137,12 @@ public class VideoDatabase extends SQLiteOpenHelper {
             video.Title = cursor.getString(1);
             //video.Url = cursor.getString(2);
             video.Thumbnail = cursor.getString(3);
-//            video.Source = cursor.getString(4);
+            video.Source = cursor.getString(4);
 //            video.Width = cursor.getInt(5);
 //            video.Height = cursor.getInt(6);
             video.Duration = cursor.getInt(7);
 //            video.Hidden = cursor.getInt(8);
-//            video.VideoType = cursor.getInt(9);
+            video.VideoType = cursor.getInt(9);
             video.CreateAt = cursor.getLong(10);
             //video.UpdateAt = cursor.getLong(11);
             video.Views = cursor.getInt(12);

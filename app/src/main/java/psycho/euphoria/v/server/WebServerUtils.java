@@ -98,6 +98,8 @@ public class WebServerUtils {
                 object.put("duration", video.Duration);
                 object.put("views", video.Views);
                 object.put("createAt", video.CreateAt);
+                object.put("videoType",video.VideoType);
+                object.put("source",video.Source);
                 array.put(object);
             } catch (Exception e) {
             }

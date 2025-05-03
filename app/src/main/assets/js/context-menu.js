@@ -1,6 +1,6 @@
 
 
-function showActions(id) {
+function showActions(id,uri) {
     bottomSheetContent.innerHTML = [
         "91",
         "57",
@@ -23,7 +23,7 @@ function showActions(id) {
     bottomSheetContainer.style.display = 'block';
     document.querySelectorAll('.menu-item')
         .forEach(element => {
-            element.addEventListener('click', evt => {
+            element.addEventListener('click', async evt => {
                 evt.stopPropagation();
                 bottomSheetContainer.style.display = 'none';
                 const index = parseInt(element.dataset.id);
@@ -44,9 +44,16 @@ function showActions(id) {
                         NativeAndroid.downloadVideo(id)
                         break;
                     case 6:
-                        const imageHost = NativeAndroid.getImageHost(id);
-                        localStorage.setItem("imageHost", imageHost);
-                        mImageHost = imageHost;
+                      
+                         
+                        const response = await fetch(`${baseUri}/api/image`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'text/plain', // Or 'application/json' if you want to send JSON
+                            },
+                            body: uri,
+                        });
+                        response.text();
                         break;
                     case 7:
                         NativeAndroid.refreshVideo(id);
@@ -68,7 +75,7 @@ function moveVideo(id, videoType) {
 }
 
 function record(id) {
-    const object = JSON.parse(localStorage.getItem('history')||"[]");
+    const object = JSON.parse(localStorage.getItem('history') || "[]");
     let founded = false;
     for (let i = 0; i < object.length; i++) {
         if (object[i]["videoType"] === mVideoType && object[i]["sort"] === mSort) {
