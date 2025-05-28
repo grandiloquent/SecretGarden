@@ -89,9 +89,9 @@ public class PlayerActivity extends Activity implements TextureView.SurfaceTextu
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 if (e.getX() > (float) mWidth / 2) {
-                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 10000);
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + mediaPlayer.getDuration() / 10);
                 } else {
-                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - 10000);
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - mediaPlayer.getDuration() / 10);
                 }
                 return true;
             }

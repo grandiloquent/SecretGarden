@@ -107,7 +107,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
             if (search == null) {
                 cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ?  ORDER by views DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), Integer.toString(limit), Integer.toString(offset)});
             } else {
-                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC ", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
+                cursor = getReadableDatabase().rawQuery("select * from videos where video_type = ? and title like ? ORDER by views DESC LIMIT ? OFFSET ?", new String[]{Integer.toString(videoType), "%" + search + "%", Integer.toString(limit), Integer.toString(offset)});
             }
         } else if (sortBy == 6) {
             if (search == null) {
@@ -148,6 +148,7 @@ public class VideoDatabase extends SQLiteOpenHelper {
             video.Views = cursor.getInt(12);
             videos.add(video);
         }
+        cursor.close();
         return videos;
     }
 

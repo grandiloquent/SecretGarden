@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100vh;
+            object-fit: contain;
+            /* Scales down to fit within the container, preserving aspect ratio (letterboxing/pillarboxing may occur) */
+        }
+    </style>
+</head>
+
+<body>
+
+    <video id="videoPlayer" controls width="640" height="360"></video>
+
+    <script src="https://fastly.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        const video = document.getElementById('videoPlayer');
+        const m3u8Url = getUrlParameter('path') || 'https://t30.cdn2020.com/video/m3u8/2025/05/11/14e09dbf/index.m3u8'; // Replace with your m3u8 URL
+
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(m3u8Url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = m3u8Url;
+            video.addEventListener('loadedmetadata', function () {
+                video.play();
+            });
+        }
+    </script>
+</body>
+
+</html>

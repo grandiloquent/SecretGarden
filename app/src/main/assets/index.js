@@ -149,7 +149,7 @@ async function render() {
             if (typeof NativeAndroid !== 'undefined')
                 NativeAndroid.play(video.id);
             else
-                window.open(video.source, '_blank')
+                window.open(`videoview.html?path=${encodeURIComponent(video.source)}`, '_blank')
         })
         bottomSheetRenderer.addEventListener('click', evt => {
             evt.stopPropagation();
